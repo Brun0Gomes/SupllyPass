@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "SupplyPass",
+    "slug": "supplypass",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0B4F9E"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "O SupplyPass usa a câmera para ler o QR Code do passaporte do fornecedor."
+      }
+    },
+    "android": {
+      "package": "com.supplypass.app",
+      "permissions": ["CAMERA"],
+      "adaptiveIcon": {
+        "backgroundColor": "#0B4F9E"
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O SupplyPass usa a câmera para ler o QR Code do passaporte do fornecedor."
+        }
+      ]
+    ]
+  }
+}
