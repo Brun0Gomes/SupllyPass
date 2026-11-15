@@ -6,8 +6,8 @@ const insert = db.prepare(`
   VALUES (@id, @kind, @actor, @action, @target, @ip, @at)
 `);
 
-// Trilha de auditoria: so existe INSERT. Nao ha rota de update nem de delete,
-// entao o registro e imutavel do ponto de vista da aplicacao.
+// Trilha de auditoria da aplicação: esta camada só grava novos eventos.
+// Proteção externa, retenção e centralização serão adicionadas na operação.
 function record({ kind, actor, action, target = null, ip = null }) {
   const entry = {
     id: newId('log'),

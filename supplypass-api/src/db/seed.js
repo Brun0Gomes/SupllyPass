@@ -1,11 +1,8 @@
+const config = require('../config');
 const db = require('./index');
 const { hashPassword, sha256, newId } = require('../services/crypto');
 
-const demoPassword = process.env.DEMO_PASSWORD;
-
-if (!demoPassword) {
-  throw new Error('DEMO_PASSWORD must be defined in .env before seeding the database.');
-}
+const { demoPassword } = config;
 
 function isoFromToday(offsetDays) {
   const date = new Date();

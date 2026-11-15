@@ -19,7 +19,7 @@ A escolha é feita na tela de login.
 
 ## Como rodar no celular
 
-Você precisa do **Node.js LTS** instalado no computador (https://nodejs.org) e do app
+Você precisa do **Node.js 22 LTS** instalado no computador (https://nodejs.org) e do app
 **Expo Go** no celular (Play Store / App Store). Computador e celular na mesma rede Wi-Fi.
 
 ```bash
@@ -50,10 +50,11 @@ O servidor imprime o endereço de rede:
 ```
 
 Na tela de login do app, toque em **Configurar servidor**, cole esse endereço, toque em
-**Testar conexão** e depois em **Entrar**. As contas de demonstração já vêm preenchidas nos
-botões *Contratante* e *Fornecedor*.
+**Testar conexão** e depois em **Entrar**. Os botões *Contratante* e *Fornecedor* preenchem
+apenas o e-mail; a senha é a que você definiu como `DEMO_PASSWORD` na API.
 
-Se preferir deixar fixo, edite `src/config.js` e troque o valor de `DEFAULT_API_URL`.
+Para definir a URL em cada ambiente sem alterar o código, copie `.env.example` para `.env` e
+preencha `EXPO_PUBLIC_API_URL`. Se ela estiver vazia, a tela de login pede o endereço da API.
 
 ---
 

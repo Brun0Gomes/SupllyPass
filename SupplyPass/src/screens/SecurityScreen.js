@@ -10,38 +10,33 @@ import { colors, radius, spacing } from '../theme';
 const CONTROLS = [
   {
     icon: 'lock-closed-outline',
-    title: 'Criptografia',
-    text: 'Documentos criptografados em trânsito (TLS) e em repouso (AES-256). O arquivo nunca fica legível no armazenamento.',
+    title: 'Criptografia em repouso',
+    text: 'Os arquivos enviados à API são cifrados com AES-256-GCM antes de serem gravados no armazenamento.',
   },
   {
     icon: 'create-outline',
-    title: 'Assinatura digital',
-    text: 'Cada envio é assinado digitalmente, provando quem enviou, quando enviou e que o arquivo é aquele mesmo.',
+    title: 'Integridade documental',
+    text: 'Cada envio recebe um hash SHA-256. O sistema confere esse hash ao recuperar o arquivo para detectar alterações.',
   },
   {
     icon: 'finger-print-outline',
-    title: 'Autenticação',
-    text: 'Login com verificação em dois fatores e sessão expirando por inatividade.',
-  },
-  {
-    icon: 'git-compare-outline',
-    title: 'Integridade documental',
-    text: 'Hash SHA-256 gerado no upload. Se um byte mudar, o hash muda e o sistema acusa adulteração.',
+    title: 'Autenticação atual',
+    text: 'O acesso conectado usa e-mail, senha e token JWT com expiração. MFA e encerramento por inatividade estão no próximo ciclo.',
   },
   {
     icon: 'people-outline',
     title: 'Controle de acesso',
-    text: 'Cada perfil vê apenas o que lhe cabe. O fornecedor enxerga os próprios arquivos; a contratante enxerga status, não conteúdo.',
+    text: 'O fornecedor acessa somente os próprios arquivos. Contratante e administrador consultam o status e os metadados dos passaportes.',
   },
   {
     icon: 'list-outline',
     title: 'Logs de auditoria',
-    text: 'Registro imutável de acessos, envios e verificações, com autor, alvo, data e hora.',
+    text: 'A API registra logins, uploads, downloads e verificações com autor, alvo, data e hora. Centralização externa de logs é a próxima etapa.',
   },
   {
     icon: 'shield-half-outline',
-    title: 'Proteção de dados (LGPD)',
-    text: 'Coleta mínima, finalidade declarada e retenção limitada ao prazo do contrato.',
+    title: 'Proteção de dados',
+    text: 'Esta demonstração limita os dados cadastrados. Política de retenção, atendimento aos titulares e gestão LGPD serão implementados antes da produção.',
   },
 ];
 

@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const os = require('node:os');
 
 const app = require('./src/app');

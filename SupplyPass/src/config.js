@@ -1,16 +1,11 @@
-// ---------------------------------------------------------------------------
-// Endereço da API.
+// A URL pode vir do .env do Expo; por exemplo:
+// EXPO_PUBLIC_API_URL=https://api.exemplo.com/api
 //
-// IMPORTANTE: o celular NÃO enxerga "localhost" do computador. Coloque aqui o
-// IP da sua máquina na rede Wi-Fi. O próprio servidor imprime esse endereço no
-// terminal quando você roda "npm start" na pasta supplypass-api:
-//
-//   rede:   http://192.168.0.15:3333/api  <- use este no app
-//
-// Você também pode trocar o endereço direto na tela de login do app, no botão
-// "Configurar servidor", sem mexer neste arquivo.
-// ---------------------------------------------------------------------------
-export const DEFAULT_API_URL = 'http://192.168.0.15:3333/api';
+// Sem variável, o usuário informa a URL na tela de login. Não deixe um IP
+// particular gravado no código, pois ele só funciona na rede de quem o criou.
+export const DEFAULT_API_URL = String(process.env.EXPO_PUBLIC_API_URL || '')
+  .trim()
+  .replace(/\/+$/, '');
 
 // Tempo máximo de espera por resposta da API (ms).
 export const REQUEST_TIMEOUT = 12000;

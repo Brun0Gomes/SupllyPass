@@ -391,13 +391,16 @@ em atenção e dois irregulares.
 ### `src/config.js`
 
 ```js
-export const DEFAULT_API_URL = 'http://192.168.0.15:3333/api';
+export const DEFAULT_API_URL = String(process.env.EXPO_PUBLIC_API_URL || '')
+  .trim()
+  .replace(/\/+$/, '');
 export const REQUEST_TIMEOUT = 12000;
 ```
 
-O endereço padrão da API. O comentário no arquivo explica o ponto que mais confunde quem roda o
-projeto pela primeira vez: **o celular não enxerga o `localhost` do computador**. `localhost` no
-celular é o próprio celular.
+A URL da API vem da variável `EXPO_PUBLIC_API_URL` do arquivo `.env` do Expo. Sem essa variável,
+a tela de login pede o endereço da API. Isso evita publicar no código um IP que só funciona na
+rede de quem desenvolveu. O celular não enxerga o `localhost` do computador: é preciso usar o
+endereço de rede informado pela API ou uma URL HTTPS publicada.
 
 ### `src/api/client.js`
 
@@ -427,6 +430,9 @@ Erro próprio, carregando o código HTTP. Permite à tela diferenciar "senha err
 
 ```js
 async function request(path, { method = 'GET', body, token, form } = {}) {
+  if (!baseUrl) {
+    throw new ApiError('Configure o endereço da API antes de continuar.', 0);
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 ```

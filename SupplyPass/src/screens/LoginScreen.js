@@ -31,7 +31,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState(CONTAS[0].email);
   const [password, setPassword] = useState('');
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
-  const [showServer, setShowServer] = useState(false);
+  const [showServer, setShowServer] = useState(!DEFAULT_API_URL);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState(null);
 
@@ -151,7 +151,7 @@ export default function LoginScreen() {
                   onChangeText={setApiUrl}
                   autoCapitalize="none"
                   autoCorrect={false}
-                  placeholder="http://192.168.0.15:3333/api"
+                  placeholder="https://api.suaempresa.com/api"
                   placeholderTextColor={colors.textLight}
                   style={styles.input}
                 />

@@ -74,10 +74,15 @@ Centraliza tudo que é configurável em um lugar só. Nenhum outro arquivo lê `
 diretamente.
 
 ```js
+require('dotenv').config();
+
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
 ```
+
+`dotenv` é carregado no próprio módulo de configuração, antes de qualquer leitura das variáveis.
+Assim, `npm start`, `npm run seed` e `npm run reset` usam o mesmo `.env`.
 
 O prefixo `node:` deixa explícito que são módulos internos do Node, não pacotes do npm.
 
@@ -101,13 +106,17 @@ intermediárias se faltarem e **não dá erro** se a pasta já existir.
 
 ```js
 function loadFileKey() {
-  if (process.env.FILE_KEY && process.env.FILE_KEY.length === 64) {
-    return Buffer.from(process.env.FILE_KEY, 'hex');
+  const fileKey = String(process.env.FILE_KEY || '').trim();
+  if (fileKey) {
+    if (!/^[a-fA-F0-9]{64}$/.test(fileKey)) {
+      throw new Error('FILE_KEY must be 64 hexadecimal characters.');
+    }
+    return Buffer.from(fileKey, 'hex');
   }
 ```
 
 A chave do AES-256 tem 32 bytes. Escrita em hexadecimal, cada byte vira 2 caracteres — por isso a
-verificação de 64 caracteres. `Buffer.from(texto, 'hex')` converte o texto de volta em bytes.
+validação de 64 caracteres hexadecimais. `Buffer.from(texto, 'hex')` converte o texto de volta em bytes.
 
 ```js
   const keyPath = path.join(dataDir, 'file.key');
@@ -126,21 +135,22 @@ verificação de 64 caracteres. `Buffer.from(texto, 'hex')` converte o texto de 
 
 ```js
 module.exports = {
-  port: Number(process.env.PORT || 3333),
-  jwtSecret: process.env.JWT_SECRET,
+  port: positiveInteger('PORT', 3333, { max: 65535 }),
+  jwtSecret: requiredValue('JWT_SECRET', { minLength: 32 }),
+  demoPassword: requiredValue('DEMO_PASSWORD', { minLength: 10 }),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
   dbFile: process.env.DB_FILE || path.join(dataDir, 'supplypass.db'),
   dataDir,
   storageDir,
   fileKey: loadFileKey(),
-  alertWindowDays: Number(process.env.ALERT_WINDOW_DAYS || 30),
-  maxUploadBytes: Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024),
+  alertWindowDays: positiveInteger('ALERT_WINDOW_DAYS', 30),
+  maxUploadBytes: positiveInteger('MAX_UPLOAD_BYTES', 10 * 1024 * 1024),
 };
 ```
 
-O padrão `process.env.X || valorPadrao` faz o projeto rodar sem nenhuma configuração, mas permite
-mudar tudo por variável de ambiente. `Number(...)` é necessário porque variáveis de ambiente
-sempre chegam como texto — sem isso, `porta + 1` viraria `"33331"`.
+A configuração exige `JWT_SECRET` com ao menos 32 caracteres e `DEMO_PASSWORD` com ao menos 10.
+Os números opcionais passam por validação antes de iniciar; valores inválidos falham cedo, em vez
+de deixar a API rodar de modo inconsistente.
 
 `10 * 1024 * 1024` é 10 MB escrito de forma legível.
 
@@ -533,7 +543,8 @@ function record({ kind, actor, action, target = null, ip = null }) {
   ordenam corretamente por ordem alfabética, o que simplifica o `ORDER BY`.
 
 **Só existe `INSERT` neste arquivo.** Não há função de update nem de delete, e nenhuma rota expõe
-uma. É assim que a trilha é imutável do ponto de vista da aplicação.
+uma. Isso preserva os eventos dentro da aplicação; retenção e proteção externa dos logs exigem
+infraestrutura adicional.
 
 ---
 
@@ -914,11 +925,12 @@ o `LIMIT_FILE_SIZE`, que vira "arquivo maior que o limite de 10 MB" em vez de um
 ## 15. `server.js`
 
 ```js
-require('dotenv').config();
+const app = require('./src/app');
+const config = require('./src/config');
 ```
 
-Precisa ser a **primeira linha executada**. Ela carrega o `.env` para `process.env`; se viesse
-depois do `require('./src/config')`, a configuração já teria sido lida com os valores padrão.
+`src/config.js` carrega o `.env` e valida a configuração. Assim, os três comandos de execução
+(`start`, `seed` e `reset`) usam exatamente as mesmas variáveis e regras.
 
 ```js
 const { ensureSeed } = require('./src/db/seed');

@@ -22,6 +22,10 @@ export class ApiError extends Error {
 
 // Requisição genérica: monta cabeçalhos, aplica timeout e traduz o erro.
 async function request(path, { method = 'GET', body, token, form } = {}) {
+  if (!baseUrl) {
+    throw new ApiError('Configure o endereço da API antes de continuar.', 0);
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 

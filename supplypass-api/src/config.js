@@ -1,15 +1,33 @@
+require('dotenv').config();
+
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
 
+function requiredValue(name, { minLength = 1 } = {}) {
+  const value = String(process.env[name] || '').trim();
+  if (!value) throw new Error(`${name} must be defined in .env. See .env.example.`);
+  if (value.length < minLength) {
+    throw new Error(`${name} must contain at least ${minLength} characters.`);
+  }
+  return value;
+}
+
+function positiveInteger(name, fallback, { max } = {}) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === '') return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1 || (max && value > max)) {
+    throw new Error(`${name} must be a positive integer${max ? ` up to ${max}` : ''}.`);
+  }
+  return value;
+}
+
 const rootDir = path.resolve(__dirname, '..');
 const dataDir = path.join(rootDir, 'data');
 const storageDir = path.join(rootDir, 'storage');
-const jwtSecret = process.env.JWT_SECRET;
-
-if (!jwtSecret) {
-  throw new Error('JWT_SECRET must be defined in .env. See .env.example.');
-}
+const jwtSecret = requiredValue('JWT_SECRET', { minLength: 32 });
+const demoPassword = requiredValue('DEMO_PASSWORD', { minLength: 10 });
 
 // As pastas de dados e de arquivos sao criadas na primeira execucao.
 fs.mkdirSync(dataDir, { recursive: true });
@@ -19,8 +37,12 @@ fs.mkdirSync(storageDir, { recursive: true });
 // Em producao ela viria de um cofre de segredos; aqui, se nao houver variavel
 // de ambiente, geramos uma vez e guardamos em data/file.key.
 function loadFileKey() {
-  if (process.env.FILE_KEY && process.env.FILE_KEY.length === 64) {
-    return Buffer.from(process.env.FILE_KEY, 'hex');
+  const fileKey = String(process.env.FILE_KEY || '').trim();
+  if (fileKey) {
+    if (!/^[a-fA-F0-9]{64}$/.test(fileKey)) {
+      throw new Error('FILE_KEY must be 64 hexadecimal characters.');
+    }
+    return Buffer.from(fileKey, 'hex');
   }
   const keyPath = path.join(dataDir, 'file.key');
   if (!fs.existsSync(keyPath)) {
@@ -30,14 +52,15 @@ function loadFileKey() {
 }
 
 module.exports = {
-  port: Number(process.env.PORT || 3333),
+  port: positiveInteger('PORT', 3333, { max: 65535 }),
   jwtSecret,
+  demoPassword,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
   dbFile: process.env.DB_FILE || path.join(dataDir, 'supplypass.db'),
   dataDir,
   storageDir,
   fileKey: loadFileKey(),
   // Janela de alerta: documento com vencimento dentro desse prazo entra em "vencendo".
-  alertWindowDays: Number(process.env.ALERT_WINDOW_DAYS || 30),
-  maxUploadBytes: Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024),
+  alertWindowDays: positiveInteger('ALERT_WINDOW_DAYS', 30),
+  maxUploadBytes: positiveInteger('MAX_UPLOAD_BYTES', 10 * 1024 * 1024),
 };

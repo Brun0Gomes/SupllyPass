@@ -38,8 +38,8 @@ export default function MyDocumentsScreen({ navigation }) {
       <View style={styles.banner}>
         <Ionicons name="lock-closed-outline" size={16} color={colors.primaryDark} />
         <Text style={styles.bannerText}>
-          Os arquivos são criptografados no envio e recebem uma assinatura digital com hash de
-          integridade. A contratante vê o status, não o conteúdo.
+          Os arquivos enviados à API são criptografados no armazenamento e recebem um hash para
+          verificação de integridade. A contratante vê status e metadados, não o conteúdo.
         </Text>
       </View>
 

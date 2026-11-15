@@ -10,7 +10,8 @@ verificação por QR Code devolvendo apenas o status, nunca os arquivos.
 
 ## Como rodar
 
-Precisa do **Node.js LTS** (https://nodejs.org).
+Precisa do **Node.js 22 LTS**. A API usa `better-sqlite3`, que neste projeto foi validado nessa
+linha do Node; versões fora do intervalo 22 podem precisar de compilador C++ para instalar.
 
 Antes de iniciar, copie `.env.example` para `.env` e defina uma `JWT_SECRET`
 única. O arquivo `.env` é ignorado pelo Git e não deve ser publicado.
@@ -114,7 +115,7 @@ curl -s -X POST http://localhost:3333/api/verify \
 | Criptografia em repouso | AES-256-GCM; o arquivo é cifrado **em memória**, antes de tocar o disco |
 | Integridade | SHA-256 do arquivo original gravado no banco e reconferido em todo download |
 | Antiadulteração | o `authTag` do GCM faz a decifragem falhar se o arquivo cifrado for alterado |
-| Auditoria | tabela `audit_logs` só recebe INSERT — não há rota de update nem de delete |
+| Auditoria | tabela `audit_logs` recebe eventos da aplicação; centralização e retenção externa estão planejadas |
 | Versionamento | o documento antigo recebe `superseded_at`; nada é apagado |
 | Vazamento na verificação | `/verify` devolve status, score e alertas — nunca nome de arquivo, hash ou download |
 

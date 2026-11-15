@@ -30,7 +30,7 @@ const demoLogs = [
     id: 'log-seed-1',
     kind: 'acesso',
     actor: 'Camila Ribeiro · Grupo Meridiano',
-    action: 'Autenticação em dois fatores aprovada',
+    action: 'Sessão de demonstração iniciada',
     target: 'Sessão web',
     at: Date.now() - 1000 * 60 * 60 * 30,
   },

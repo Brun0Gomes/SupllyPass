@@ -9,6 +9,9 @@
     "seed": "node src/db/seed.js",
     "reset": "node src/db/reset.js"
   },
+  "engines": {
+    "node": ">=22 <24"
+  },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
     "cors": "^2.8.5",

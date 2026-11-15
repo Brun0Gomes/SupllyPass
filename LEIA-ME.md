@@ -16,7 +16,7 @@ SupplyPass-completo/
 
 ## Começando do zero
 
-Você precisa do **Node.js LTS** (https://nodejs.org) e do app **Expo Go** no celular.
+Você precisa do **Node.js 22 LTS** (https://nodejs.org) e do app **Expo Go** no celular.
 Computador e celular na mesma rede Wi-Fi.
 
 **Terminal 1 — a API:**
@@ -24,7 +24,7 @@ Computador e celular na mesma rede Wi-Fi.
 ```bash
 cd supplypass-api
 copy .env.example .env
-# defina JWT_SECRET e DEMO_PASSWORD no arquivo .env
+# defina JWT_SECRET (mínimo 32 caracteres) e DEMO_PASSWORD (mínimo 10) no .env
 npm install
 npm start
 ```
@@ -35,6 +35,8 @@ Anote o endereço de rede que aparece, algo como `http://192.168.0.15:3333/api`.
 
 ```bash
 cd SupplyPass
+copy .env.example .env
+# opcional: defina EXPO_PUBLIC_API_URL para deixar a URL da API pré-configurada
 npm install
 npx expo install --fix
 npx expo start
