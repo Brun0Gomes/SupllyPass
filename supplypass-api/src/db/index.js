@@ -1,6 +1,7 @@
 const Database = require('better-sqlite3');
 
 const config = require('../config');
+const { newId } = require('../services/crypto');
 
 const db = new Database(config.dbFile);
 
@@ -16,9 +17,10 @@ db.exec(`
     email         TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     password_salt TEXT NOT NULL,
-    role          TEXT NOT NULL CHECK (role IN ('contratante', 'fornecedor', 'admin')),
+    role          TEXT NOT NULL CHECK (role IN ('administrador', 'gestor', 'analista', 'fornecedor', 'verificador')),
     company       TEXT,
     supplier_id   TEXT REFERENCES suppliers(id),
+    active        INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
     created_at    TEXT NOT NULL
   );
 
@@ -31,6 +33,8 @@ db.exec(`
     email      TEXT,
     since      TEXT,
     active     INTEGER NOT NULL DEFAULT 1,
+    qr_token   TEXT UNIQUE,
+    qr_active  INTEGER NOT NULL DEFAULT 1 CHECK (qr_active IN (0, 1)),
     created_at TEXT NOT NULL
   );
 
@@ -67,5 +71,80 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_logs_at ON audit_logs (at DESC);
 `);
+
+// Bancos criados antes da Fase 1 têm os papéis antigos e não possuem `active`.
+// Recriamos apenas essa tabela para preservar os usuários existentes e permitir
+// os novos papéis sem exigir que a pessoa apague o banco manualmente.
+function migrateUsersTable() {
+  const definition = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'")
+    .get()?.sql || '';
+  const columns = db.prepare('PRAGMA table_info(users)').all();
+  const hasActive = columns.some((column) => column.name === 'active');
+  const hasNewRoles = definition.includes("'gestor'") && definition.includes("'verificador'");
+
+  if (hasActive && hasNewRoles) return;
+
+  const activeValue = hasActive ? 'active' : '1';
+  db.pragma('foreign_keys = OFF');
+  try {
+    db.transaction(() => {
+      db.exec(`
+        CREATE TABLE users_next (
+          id            TEXT PRIMARY KEY,
+          name          TEXT NOT NULL,
+          email         TEXT NOT NULL UNIQUE,
+          password_hash TEXT NOT NULL,
+          password_salt TEXT NOT NULL,
+          role          TEXT NOT NULL CHECK (role IN ('administrador', 'gestor', 'analista', 'fornecedor', 'verificador')),
+          company       TEXT,
+          supplier_id   TEXT REFERENCES suppliers(id),
+          active        INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+          created_at    TEXT NOT NULL
+        );
+        INSERT INTO users_next (
+          id, name, email, password_hash, password_salt, role, company, supplier_id, active, created_at
+        )
+        SELECT
+          id, name, email, password_hash, password_salt,
+          CASE role
+            WHEN 'admin' THEN 'administrador'
+            WHEN 'contratante' THEN 'gestor'
+            ELSE role
+          END,
+          company, supplier_id, ${activeValue}, created_at
+        FROM users;
+        DROP TABLE users;
+        ALTER TABLE users_next RENAME TO users;
+      `);
+    })();
+  } finally {
+    db.pragma('foreign_keys = ON');
+  }
+}
+
+migrateUsersTable();
+
+// QR Codes antigos usavam o ID previsível do fornecedor. Cada fornecedor passa
+// a ter um token aleatório, que pode ser trocado sem mudar seu cadastro.
+function migrateSuppliersTable() {
+  const columns = db.prepare('PRAGMA table_info(suppliers)').all();
+  const names = new Set(columns.map((column) => column.name));
+
+  if (!names.has('qr_token')) db.exec('ALTER TABLE suppliers ADD COLUMN qr_token TEXT');
+  if (!names.has('qr_active')) {
+    db.exec('ALTER TABLE suppliers ADD COLUMN qr_active INTEGER NOT NULL DEFAULT 1');
+  }
+
+  const withoutToken = db.prepare('SELECT id FROM suppliers WHERE qr_token IS NULL OR qr_token = ?');
+  const updateToken = db.prepare('UPDATE suppliers SET qr_token = ?, qr_active = 1 WHERE id = ?');
+  const rotateMissing = db.transaction(() => {
+    withoutToken.all('').forEach((supplier) => updateToken.run(newId('spq'), supplier.id));
+  });
+  rotateMissing();
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_suppliers_qr_token ON suppliers(qr_token)');
+}
+
+migrateSuppliersTable();
 
 module.exports = db;

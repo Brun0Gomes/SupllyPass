@@ -17,12 +17,12 @@ export default function AuditScreen() {
   const { logs, refresh, loading, mode } = useApp();
 
   return (
-    <Screen title="Trilha de auditoria" subtitle="Registros imutáveis de acesso e alteração" scroll={false}>
+    <Screen title="Trilha de auditoria" subtitle="Eventos registrados pela aplicação" scroll={false}>
       <View style={styles.banner}>
         <Ionicons name="shield-checkmark-outline" size={16} color={colors.primaryDark} />
         <Text style={styles.bannerText}>
-          Todo acesso, envio e verificação gera um registro com autor, alvo, data e hora. Os registros
-          não podem ser editados nem apagados pelos usuários.
+          Todo acesso, envio e verificação gera um registro com autor, alvo, data e hora. A proteção
+          externa e a retenção dos logs serão adicionadas na etapa operacional.
         </Text>
       </View>
 

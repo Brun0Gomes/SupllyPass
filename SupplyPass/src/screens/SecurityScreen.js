@@ -26,7 +26,7 @@ const CONTROLS = [
   {
     icon: 'people-outline',
     title: 'Controle de acesso',
-    text: 'O fornecedor acessa somente os próprios arquivos. Contratante e administrador consultam o status e os metadados dos passaportes.',
+    text: 'O fornecedor acessa somente os próprios arquivos. Gestor, analista e administrador têm permissões distintas sobre os passaportes.',
   },
   {
     icon: 'list-outline',

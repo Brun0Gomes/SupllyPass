@@ -1,6 +1,13 @@
 const jwt = require('jsonwebtoken');
 
 const config = require('../config');
+const db = require('../db');
+
+const findActiveUser = db.prepare(`
+  SELECT id, name, email, role, company, supplier_id
+  FROM users
+  WHERE id = ? AND active = 1
+`);
 
 // Le o token do cabecalho "Authorization: Bearer <token>", valida a assinatura
 // e coloca os dados do usuario em req.user. Sem token valido, ninguem passa.
@@ -12,23 +19,32 @@ function authenticate(req, res, next) {
     return res.status(401).json({ error: 'Token ausente. Faça login para continuar.' });
   }
 
+  let payload;
   try {
-    const payload = jwt.verify(token, config.jwtSecret);
-    req.user = {
-      id: payload.sub,
-      name: payload.name,
-      email: payload.email,
-      role: payload.role,
-      company: payload.company,
-      supplierId: payload.supplierId || null,
-    };
-    return next();
+    payload = jwt.verify(token, config.jwtSecret);
   } catch (error) {
     const expired = error.name === 'TokenExpiredError';
     return res.status(401).json({
       error: expired ? 'Sessão expirada. Faça login novamente.' : 'Token inválido.',
     });
   }
+
+  // Sempre recarrega o usuário: desativações e alterações de papel passam a
+  // valer imediatamente, mesmo que o JWT ainda não tenha expirado.
+  const user = findActiveUser.get(payload.sub);
+  if (!user) {
+    return res.status(401).json({ error: 'Sessão inválida ou conta desativada.' });
+  }
+
+  req.user = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    company: user.company,
+    supplierId: user.supplier_id || null,
+  };
+  return next();
 }
 
 // Controle de acesso por papel: cada rota declara quem pode entrar.

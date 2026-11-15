@@ -4,7 +4,7 @@ App mobile em **React Native + Expo (JavaScript)**.
 
 Centraliza os documentos de cada fornecedor em um passaporte único, mostra o que está válido,
 vencendo ou pendente, calcula um **Supplier Score** de conformidade e permite que a empresa
-contratante verifique tudo em segundos lendo um **QR Code** — antes de fechar contrato.
+gestor ou verificador consulte tudo em segundos lendo um **QR Code** — antes de liberar o acesso.
 
 O app funciona de dois jeitos:
 
@@ -62,7 +62,7 @@ preencha `EXPO_PUBLIC_API_URL`. Se ela estiver vazia, a tela de login pede o end
 
 1. **O problema** — abra o app na tela de login e conte a dor: contrato, certidão, LGPD, seguro e
    treinamento espalhados em e-mail, pasta, Excel e WhatsApp.
-2. **Entre como _contratante_** — o Painel mostra quantos fornecedores estão regulares, quantos
+2. **Entre como _gestor_** — o Painel mostra quantos fornecedores estão regulares, quantos
    documentos vencem em 30 dias e quantas contratações estão bloqueadas.
 3. **Abra um fornecedor irregular** (ConstruBase ou SegPrime) — passaporte com documentos em
    vermelho e score baixo.
@@ -72,7 +72,7 @@ preencha `EXPO_PUBLIC_API_URL`. Se ela estiver vazia, a tela de login pede o end
 5. **Volte ao login e entre como _fornecedor_** — em *Documentos*, envie o "Alvará de
    funcionamento". No modo conectado o arquivo sobe de verdade, o servidor devolve o **hash
    SHA-256** e o **score sobe de 83 para 94** na hora.
-6. **Feche pela segurança** — aba *Segurança*, e depois a aba *Auditoria* no perfil contratante:
+6. **Feche pela segurança** — aba *Segurança*, e depois a aba *Auditoria* no perfil gestor:
    tudo que você acabou de fazer já está registrado com autor, alvo, data e hora.
 
 Frase de fechamento: *"SupplyPass é um passaporte digital que centraliza, valida e monitora a
@@ -129,12 +129,13 @@ SupplyPass/
     ├── navigation/RootNavigator.js
     └── screens/
         ├── LoginScreen.js              # login real + modo demonstração
-        ├── DashboardScreen.js          # contratante: painel de conformidade
-        ├── SuppliersScreen.js          # contratante: busca e filtros
-        ├── SupplierPassportScreen.js   # contratante: passaporte completo
-        ├── ScanScreen.js               # contratante: leitor de QR Code
-        ├── VerifyResultScreen.js       # contratante: resultado da verificação
-        ├── AuditScreen.js              # contratante: trilha de auditoria
+        ├── DashboardScreen.js          # gestor: painel de conformidade
+        ├── SuppliersScreen.js          # gestor/analista: busca e filtros
+        ├── SupplierPassportScreen.js   # gestor/analista: passaporte completo
+        ├── ScanScreen.js               # gestor/analista/verificador: leitor de QR Code
+        ├── VerifyResultScreen.js       # resultado limitado da verificação
+        ├── AuditScreen.js              # gestor/administrador: trilha de auditoria
+        ├── UsersScreen.js              # administrador: usuários e acessos
         ├── MyPassportScreen.js         # fornecedor: meu passaporte
         ├── MyDocumentsScreen.js        # fornecedor: enviar/atualizar documentos
         ├── AddDocumentScreen.js        # fornecedor: formulário de envio

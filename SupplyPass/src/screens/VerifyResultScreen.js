@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -10,12 +10,13 @@ import SectionTitle from '../components/SectionTitle';
 import { useApp } from '../context/AppContext';
 import { colors, radius, spacing } from '../theme';
 import { formatDateTime } from '../utils/dates';
-import { summarize } from '../utils/score';
+import { DOC_STATUS, OVERALL_STATUS, summarize } from '../utils/score';
 
 export default function VerifyResultScreen({ route, navigation }) {
-  const { getSupplier } = useApp();
-  const supplier = getSupplier(route.params.id);
-  const verifiedAt = useMemo(() => Date.now(), []);
+  const { role } = useApp();
+  const result = route.params?.result;
+  const supplier = result?.supplier;
+  const canViewPassport = ['administrador', 'gestor', 'analista'].includes(role);
 
   if (!supplier) {
     return (
@@ -25,15 +26,20 @@ export default function VerifyResultScreen({ route, navigation }) {
     );
   }
 
-  const { passport, score, overall, validos, vencendo, problemas } = summarize(supplier);
-  const alertas = passport.filter((i) => i.status.key !== 'valido');
+  const local = !result.summary;
+  const localSummary = local ? summarize(supplier) : null;
+  const overall = localSummary ? localSummary.overall : OVERALL_STATUS[supplier.status] || OVERALL_STATUS.atencao;
+  const score = localSummary ? localSummary.score : supplier.score;
+  const counts = localSummary
+    ? { validos: localSummary.validos, vencendo: localSummary.vencendo, pendentes: localSummary.problemas }
+    : supplier.counts;
+  const alerts = localSummary
+    ? localSummary.passport.filter((item) => item.status.key !== 'valido')
+    : (supplier.alerts || []).map((item) => ({ ...item, key: item.label, status: DOC_STATUS[item.status] }));
+  const verifiedAt = result.verifiedAt || new Date().toISOString();
 
   return (
-    <Screen
-      title="Resultado da verificação"
-      subtitle={supplier.id}
-      onBack={() => navigation.goBack()}
-    >
+    <Screen title="Resultado da verificação" subtitle={supplier.id} onBack={() => navigation.goBack()}>
       <View style={[styles.seal, { backgroundColor: overall.soft, borderColor: overall.color }]}>
         <Ionicons name={overall.icon} size={44} color={overall.color} />
         <Text style={[styles.sealTitle, { color: overall.color }]}>{overall.label}</Text>
@@ -50,28 +56,26 @@ export default function VerifyResultScreen({ route, navigation }) {
       </Card>
 
       <View style={styles.counters}>
-        <Counter value={validos} label="válidos" color={colors.green} />
-        <Counter value={vencendo} label="vencendo" color={colors.amber} />
-        <Counter value={problemas} label="pendentes" color={colors.red} />
+        <Counter value={counts?.validos || 0} label="válidos" color={colors.green} />
+        <Counter value={counts?.vencendo || 0} label="vencendo" color={colors.amber} />
+        <Counter value={counts?.pendentes || 0} label="pendentes" color={colors.red} />
       </View>
 
-      {alertas.length > 0 ? (
+      {alerts.length > 0 ? (
         <>
           <SectionTitle>O que impede ou limita a contratação</SectionTitle>
           <Card style={styles.alertCard}>
-            {alertas.map((item, index) => (
+            {alerts.map((item, index) => (
               <View
-                key={item.key}
-                style={[styles.alertRow, index === alertas.length - 1 && { borderBottomWidth: 0 }]}
+                key={`${item.key}-${index}`}
+                style={[styles.alertRow, index === alerts.length - 1 && { borderBottomWidth: 0 }]}
               >
                 <Ionicons name={item.status.icon} size={16} color={item.status.color} />
                 <Text style={styles.alertText}>
                   {item.label}
                   {item.required ? ' (obrigatório)' : ''}
                 </Text>
-                <Text style={[styles.alertStatus, { color: item.status.color }]}>
-                  {item.status.label}
-                </Text>
+                <Text style={[styles.alertStatus, { color: item.status.color }]}>{item.status.label}</Text>
               </View>
             ))}
           </Card>
@@ -90,17 +94,19 @@ export default function VerifyResultScreen({ route, navigation }) {
       </View>
 
       <View style={styles.actions}>
-        <PrimaryButton
-          label="Ver passaporte completo"
-          icon="document-text-outline"
-          onPress={() => navigation.navigate('SupplierPassport', { id: supplier.id })}
-        />
+        {canViewPassport ? (
+          <PrimaryButton
+            label="Ver passaporte completo"
+            icon="document-text-outline"
+            onPress={() => navigation.navigate('SupplierPassport', { id: supplier.id })}
+          />
+        ) : null}
         <PrimaryButton
           label="Nova leitura"
           icon="qr-code-outline"
           variant="outline"
           onPress={() => navigation.goBack()}
-          style={{ marginTop: spacing.md }}
+          style={{ marginTop: canViewPassport ? spacing.md : 0 }}
         />
       </View>
     </Screen>
@@ -118,44 +124,18 @@ function Counter({ value, label, color }) {
 
 const styles = StyleSheet.create({
   muted: { color: colors.textMuted },
-  seal: {
-    alignItems: 'center',
-    borderWidth: 2,
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-  },
+  seal: { alignItems: 'center', borderWidth: 2, borderRadius: radius.lg, padding: spacing.xl },
   sealTitle: { fontSize: 18, fontWeight: '700', marginTop: spacing.sm, textAlign: 'center' },
   sealMessage: { fontSize: 13, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
-  identityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.lg,
-  },
+  identityCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
   name: { fontSize: 16, fontWeight: '700', color: colors.text },
   meta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  counters: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.md,
-    marginTop: spacing.md,
-  },
+  counters: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingVertical: spacing.md, marginTop: spacing.md },
   counter: { alignItems: 'center' },
   counterValue: { fontSize: 20, fontWeight: '700' },
   counterLabel: { fontSize: 11, color: colors.textMuted },
   alertCard: { paddingVertical: 0 },
-  alertRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
+  alertRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   alertText: { flex: 1, fontSize: 13, color: colors.text },
   alertStatus: { fontSize: 11, fontWeight: '700' },
   stamp: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginTop: spacing.md },

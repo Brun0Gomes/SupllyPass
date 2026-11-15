@@ -15,6 +15,7 @@ export function supplierFromApi(apiSupplier) {
     city: apiSupplier.city || '',
     email: apiSupplier.email || '',
     since: apiSupplier.since || '',
+    qrToken: apiSupplier.qrToken || null,
     documents: passport
       .filter((item) => item.document)
       .map((item) => ({

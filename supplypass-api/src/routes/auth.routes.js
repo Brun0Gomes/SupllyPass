@@ -8,7 +8,7 @@ const { verifyPassword } = require('../services/crypto');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
-const findUser = db.prepare('SELECT * FROM users WHERE email = ?');
+const findUser = db.prepare('SELECT * FROM users WHERE email = ? AND active = 1');
 
 router.post('/login', (req, res) => {
   const { email, password } = req.body || {};

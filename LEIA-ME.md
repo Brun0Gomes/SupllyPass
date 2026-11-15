@@ -53,19 +53,21 @@ Escaneie o QR Code do terminal com o Expo Go. Na tela de login do app, toque em
 
 | Perfil | E-mail | Senha |
 |---|---|---|
-| Contratante | `compras@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
+| Gestor | `compras@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
+| Analista | `analise@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
 | Fornecedor | `contato@novatech.com.br` | value defined in `DEMO_PASSWORD` |
 | Administrador | `admin@supplypass.app` | value defined in `DEMO_PASSWORD` |
+| Verificador | `verificador@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
 
 ## O roteiro de 5 minutos
 
 1. Tela de login: contar o problema — documentos espalhados em e-mail, pasta, planilha e WhatsApp.
-2. Entrar como **contratante**: o painel mostra regulares, vencimentos e bloqueios.
+2. Entrar como **gestor**: o painel mostra regulares, vencimentos e bloqueios.
 3. Abrir **ConstruBase** ou **SegPrime**: passaporte irregular, score baixo, documento em vermelho.
 4. Aba **Verificar**: escanear o QR do outro celular, ou tocar em um código de demonstração.
 5. Sair, entrar como **fornecedor**, aba **Documentos**: enviar o "Alvará de funcionamento".
    O hash SHA-256 aparece na confirmação e o score sobe de **83 para 94**.
-6. Aba **Segurança** e, no perfil contratante, aba **Auditoria**: tudo que você fez está
+6. Aba **Segurança** e, no perfil gestor, aba **Auditoria**: tudo que você fez está
    registrado com autor, alvo, data e hora.
 
 Frase de fechamento: *"SupplyPass é um passaporte digital que centraliza, valida e monitora a

@@ -7,8 +7,8 @@ const { authenticate, requireRole, actorOf } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Todas as rotas abaixo exigem login e perfil de contratante ou admin.
-router.use(authenticate, requireRole('contratante', 'admin'));
+// Gestor, analista e administrador podem consultar os passaportes.
+router.use(authenticate, requireRole('gestor', 'analista', 'administrador'));
 
 // ?full=1 traz tambem o detalhe dos 7 documentos de cada fornecedor.
 // O app usa essa versao para montar o painel com uma unica requisicao.
@@ -30,6 +30,22 @@ router.get('/:id', (req, res) => {
   });
 
   return res.json({ supplier: passport });
+});
+
+// Consulta manual no passaporte completo: não depende do token de QR Code,
+// mas mantém a mesma rastreabilidade da leitura feita pela câmera.
+router.post('/:id/check', (req, res) => {
+  const passport = suppliers.getPassport(req.params.id);
+  if (!passport) return res.status(404).json({ error: 'Fornecedor não encontrado.' });
+
+  logs.record({
+    kind: 'verificacao',
+    actor: actorOf(req),
+    action: 'Consulta manual de passaporte',
+    target: passport.name,
+    ip: req.ip,
+  });
+  return res.json({ supplier: passport, verifiedAt: new Date().toISOString() });
 });
 
 // Historico de versoes de um documento: o que foi substituido continua registrado.

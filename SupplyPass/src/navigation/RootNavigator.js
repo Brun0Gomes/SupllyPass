@@ -15,6 +15,7 @@ import SecurityScreen from '../screens/SecurityScreen';
 import SupplierPassportScreen from '../screens/SupplierPassportScreen';
 import SuppliersScreen from '../screens/SuppliersScreen';
 import VerifyResultScreen from '../screens/VerifyResultScreen';
+import UsersScreen from '../screens/UsersScreen';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
@@ -35,7 +36,7 @@ const tabScreenOptions = {
   tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
 };
 
-function ContratanteTabs() {
+function GestorTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen
@@ -52,6 +53,52 @@ function ContratanteTabs() {
         name="Verificar"
         component={ScanScreen}
         options={{ tabBarIcon: tabIcon('qr-code-outline', 'qr-code') }}
+      />
+      <Tab.Screen
+        name="Auditoria"
+        component={AuditScreen}
+        options={{ tabBarIcon: tabIcon('shield-outline', 'shield') }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+function AnalistaTabs() {
+  return (
+    <Tab.Navigator screenOptions={tabScreenOptions}>
+      <Tab.Screen
+        name="Fornecedores"
+        component={SuppliersScreen}
+        options={{ tabBarIcon: tabIcon('people-outline', 'people') }}
+      />
+      <Tab.Screen
+        name="Verificar"
+        component={ScanScreen}
+        options={{ tabBarIcon: tabIcon('qr-code-outline', 'qr-code') }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+function VerificadorTabs() {
+  return (
+    <Tab.Navigator screenOptions={tabScreenOptions}>
+      <Tab.Screen
+        name="Verificar"
+        component={ScanScreen}
+        options={{ tabBarIcon: tabIcon('qr-code-outline', 'qr-code') }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+function AdministradorTabs() {
+  return (
+    <Tab.Navigator screenOptions={tabScreenOptions}>
+      <Tab.Screen
+        name="Usuários"
+        component={UsersScreen}
+        options={{ tabBarIcon: tabIcon('people-outline', 'people') }}
       />
       <Tab.Screen
         name="Auditoria"
@@ -96,11 +143,26 @@ export default function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!role ? (
         <Stack.Screen name="Login" component={LoginScreen} />
-      ) : role === 'contratante' ? (
+      ) : role === 'gestor' ? (
         <Stack.Group>
-          <Stack.Screen name="ContratanteTabs" component={ContratanteTabs} />
+          <Stack.Screen name="GestorTabs" component={GestorTabs} />
           <Stack.Screen name="SupplierPassport" component={SupplierPassportScreen} />
           <Stack.Screen name="VerifyResult" component={VerifyResultScreen} />
+        </Stack.Group>
+      ) : role === 'analista' ? (
+        <Stack.Group>
+          <Stack.Screen name="AnalistaTabs" component={AnalistaTabs} />
+          <Stack.Screen name="SupplierPassport" component={SupplierPassportScreen} />
+          <Stack.Screen name="VerifyResult" component={VerifyResultScreen} />
+        </Stack.Group>
+      ) : role === 'verificador' ? (
+        <Stack.Group>
+          <Stack.Screen name="VerificadorTabs" component={VerificadorTabs} />
+          <Stack.Screen name="VerifyResult" component={VerifyResultScreen} />
+        </Stack.Group>
+      ) : role === 'administrador' ? (
+        <Stack.Group>
+          <Stack.Screen name="AdministradorTabs" component={AdministradorTabs} />
         </Stack.Group>
       ) : (
         <Stack.Group>

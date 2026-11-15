@@ -21,7 +21,7 @@ import { DEFAULT_API_URL } from '../config';
 import { colors, radius, spacing } from '../theme';
 
 const CONTAS = [
-  { label: 'Contratante', email: 'compras@meridiano.com.br' },
+  { label: 'Gestor', email: 'compras@meridiano.com.br' },
   { label: 'Fornecedor', email: 'contato@novatech.com.br' },
 ];
 
@@ -200,10 +200,10 @@ export default function LoginScreen() {
             <Text style={styles.demoTitle}>Entrar sem servidor (dados de demonstração)</Text>
             <View style={styles.demoRow}>
               <PrimaryButton
-                label="Contratante"
+                label="Gestor"
                 icon="business-outline"
                 variant="outline"
-                onPress={() => startDemo('contratante')}
+                onPress={() => startDemo('gestor')}
                 style={{ flex: 1 }}
               />
               <PrimaryButton

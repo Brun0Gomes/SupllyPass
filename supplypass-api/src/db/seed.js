@@ -101,7 +101,15 @@ const SEED_USERS = [
     name: 'Camila Ribeiro',
     email: 'compras@meridiano.com.br',
     password: demoPassword,
-    role: 'contratante',
+    role: 'gestor',
+    company: 'Grupo Meridiano',
+    supplierId: null,
+  },
+  {
+    name: 'Marina Costa',
+    email: 'analise@meridiano.com.br',
+    password: demoPassword,
+    role: 'analista',
     company: 'Grupo Meridiano',
     supplierId: null,
   },
@@ -114,18 +122,26 @@ const SEED_USERS = [
     supplierId: 'FOR-1042',
   },
   {
-    name: 'Administrador',
+    name: 'Administrador SupplyPass',
     email: 'admin@supplypass.app',
     password: demoPassword,
-    role: 'admin',
+    role: 'administrador',
     company: 'SupplyPass',
+    supplierId: null,
+  },
+  {
+    name: 'Portaria Meridiano',
+    email: 'verificador@meridiano.com.br',
+    password: demoPassword,
+    role: 'verificador',
+    company: 'Grupo Meridiano',
     supplierId: null,
   },
 ];
 
 const insertSupplier = db.prepare(`
-  INSERT INTO suppliers (id, name, cnpj, category, city, email, since, active, created_at)
-  VALUES (@id, @name, @cnpj, @category, @city, @email, @since, 1, @created_at)
+  INSERT INTO suppliers (id, name, cnpj, category, city, email, since, active, qr_token, qr_active, created_at)
+  VALUES (@id, @name, @cnpj, @category, @city, @email, @since, 1, @qr_token, 1, @created_at)
 `);
 
 const insertDocument = db.prepare(`
@@ -155,6 +171,7 @@ const runSeed = db.transaction(() => {
       city: supplier.city,
       email: supplier.email,
       since: supplier.since,
+      qr_token: newId('spq'),
       created_at: now,
     });
 

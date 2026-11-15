@@ -35,7 +35,7 @@ npm install
 npm start
 ```
 
-Na primeira execução o banco é criado e populado sozinho (8 fornecedores, 3 usuários).
+Na primeira execução o banco é criado e populado sozinho (8 fornecedores, 5 usuários).
 O terminal mostra dois endereços:
 
 ```
@@ -60,9 +60,11 @@ Computador e celular precisam estar na mesma rede Wi-Fi.
 
 | Perfil | E-mail | Senha |
 |---|---|---|
-| Contratante | `compras@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
+| Gestor | `compras@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
+| Analista | `analise@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
 | Fornecedor (NovaTech, FOR-1042) | `contato@novatech.com.br` | value defined in `DEMO_PASSWORD` |
 | Administrador | `admin@supplypass.app` | value defined in `DEMO_PASSWORD` |
+| Verificador | `verificador@meridiano.com.br` | value defined in `DEMO_PASSWORD` |
 
 ---
 
@@ -77,16 +79,20 @@ Todas as rotas ficam sob `/api`. Exceto `/health` e `/doc-types`, todas exigem
 | GET | `/doc-types` | qualquer um | catálogo de documentos e pesos |
 | POST | `/auth/login` | qualquer um | devolve o token JWT |
 | GET | `/auth/me` | logado | dados do usuário do token |
-| GET | `/suppliers` | contratante, admin | lista com score e status |
-| GET | `/suppliers?full=1` | contratante, admin | lista já com o passaporte de cada um |
-| GET | `/suppliers/:id` | contratante, admin | passaporte completo (registra consulta) |
-| GET | `/suppliers/:id/history/:type` | contratante, admin | versões de um documento |
-| POST | `/verify` | logado | verifica um código de QR, devolve **só status** |
-| GET | `/verify/:code` | logado | mesma coisa, pela URL |
+| GET | `/suppliers` | gestor, analista, administrador | lista com score e status |
+| GET | `/suppliers?full=1` | gestor, analista, administrador | lista já com o passaporte de cada um |
+| GET | `/suppliers/:id` | gestor, analista, administrador | passaporte completo (registra consulta) |
+| POST | `/suppliers/:id/check` | gestor, analista, administrador | registra consulta manual do passaporte |
+| GET | `/suppliers/:id/history/:type` | gestor, analista, administrador | versões de um documento |
+| POST | `/verify` | administrador, gestor, analista, verificador | verifica um código de QR, devolve **só status** |
+| GET | `/verify/:code` | administrador, gestor, analista, verificador | mesma coisa, pela URL |
 | GET | `/me/passport` | fornecedor | passaporte do próprio fornecedor |
 | POST | `/me/documents` | fornecedor | upload (multipart: `file`, `type`, `expiresAt`) |
 | GET | `/me/documents/:id/download` | fornecedor | decifra, confere o hash e devolve o arquivo |
-| GET | `/logs` | contratante, admin | trilha de auditoria |
+| GET | `/logs` | gestor, administrador | trilha de auditoria |
+| GET | `/users` | administrador | lista os usuários e seus acessos |
+| POST | `/users` | administrador | cria um usuário com perfil definido |
+| PATCH | `/users/:id` | administrador | altera perfil, vínculo ou situação da conta |
 
 ### Exemplo rápido
 
@@ -100,7 +106,7 @@ TOKEN=$(curl -s -X POST http://localhost:3333/api/auth/login \
 # verificação por QR Code
 curl -s -X POST http://localhost:3333/api/verify \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"code":"SUPPLYPASS:FOR-1058"}'
+  -d '{"code":"SUPPLYPASS:SPQ_COLE_O_TOKEN_DO_QR_AQUI"}'
 ```
 
 ---
@@ -111,7 +117,7 @@ curl -s -X POST http://localhost:3333/api/verify \
 |---|---|
 | Senhas | `scrypt` com sal aleatório por usuário; comparação em tempo constante (`timingSafeEqual`) |
 | Autenticação | JWT assinado, expiração de 8 h, validado em `middleware/auth.js` |
-| Controle de acesso | `requireRole('contratante','admin')` por grupo de rotas; fornecedor só acessa `/me` |
+| Controle de acesso | RBAC para administrador, gestor, analista, fornecedor e verificador; conta e papel são conferidos no banco a cada requisição |
 | Criptografia em repouso | AES-256-GCM; o arquivo é cifrado **em memória**, antes de tocar o disco |
 | Integridade | SHA-256 do arquivo original gravado no banco e reconferido em todo download |
 | Antiadulteração | o `authTag` do GCM faz a decifragem falhar se o arquivo cifrado for alterado |

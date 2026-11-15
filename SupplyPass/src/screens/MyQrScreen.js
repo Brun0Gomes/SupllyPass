@@ -1,9 +1,10 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 
 import Card from '../components/Card';
+import PrimaryButton from '../components/PrimaryButton';
 import Screen from '../components/Screen';
 import StatusBadge from '../components/StatusBadge';
 import { useApp } from '../context/AppContext';
@@ -11,7 +12,8 @@ import { colors, radius, spacing } from '../theme';
 import { getOverallStatus, calcScore, passportCode } from '../utils/score';
 
 export default function MyQrScreen() {
-  const { mySupplier } = useApp();
+  const { mySupplier, mode, rotateMyQr } = useApp();
+  const [rotating, setRotating] = React.useState(false);
 
   if (!mySupplier) {
     return (
@@ -24,6 +26,30 @@ export default function MyQrScreen() {
   const code = passportCode(mySupplier);
   const overall = getOverallStatus(mySupplier);
   const score = calcScore(mySupplier);
+
+  const rotate = () => {
+    Alert.alert(
+      'Gerar novo QR Code',
+      'O código atual deixará de funcionar imediatamente. Deseja continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Gerar novo',
+          onPress: async () => {
+            setRotating(true);
+            try {
+              await rotateMyQr();
+              Alert.alert('QR Code renovado', 'O código anterior foi revogado. Compartilhe apenas o novo QR Code.');
+            } catch (error) {
+              Alert.alert('Não foi possível renovar o QR Code', error.message);
+            } finally {
+              setRotating(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <Screen title="Meu QR Code" subtitle="Apresente na portaria ou ao setor de compras">
@@ -60,10 +86,21 @@ export default function MyQrScreen() {
       <View style={styles.note}>
         <Ionicons name="keypad-outline" size={16} color={colors.primaryDark} />
         <Text style={styles.noteText}>
-          Sem câmera disponível? A contratante pode digitar o código {mySupplier.id} na tela de
-          verificação.
+          Sem câmera disponível? Um gestor, analista ou verificador pode digitar o código exibido
+          acima na tela de verificação.
         </Text>
       </View>
+
+      {mode === 'api' ? (
+        <PrimaryButton
+          label={rotating ? 'Renovando QR Code...' : 'Revogar e gerar novo QR Code'}
+          icon="refresh-outline"
+          variant="outline"
+          disabled={rotating}
+          onPress={rotate}
+          style={{ marginTop: spacing.lg }}
+        />
+      ) : null}
     </Screen>
   );
 }

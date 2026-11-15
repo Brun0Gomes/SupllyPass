@@ -3,6 +3,9 @@ const { summarize } = require('./score');
 
 const selectSuppliers = db.prepare('SELECT * FROM suppliers WHERE active = 1 ORDER BY name');
 const selectSupplier = db.prepare('SELECT * FROM suppliers WHERE id = ?');
+const selectSupplierByQr = db.prepare(
+  'SELECT * FROM suppliers WHERE qr_token = ? AND qr_active = 1 AND active = 1'
+);
 
 // "Documento atual" e o que ainda nao foi substituido (superseded_at IS NULL).
 // As versoes antigas continuam na tabela, formando o historico.
@@ -29,6 +32,22 @@ function getPassport(supplierId) {
   const supplier = getSupplier(supplierId);
   if (!supplier) return null;
   return summarize(supplier, currentDocuments(supplierId));
+}
+
+function getPassportByQrToken(token) {
+  const supplier = selectSupplierByQr.get(token);
+  if (!supplier) return null;
+  return summarize(supplier, currentDocuments(supplier.id));
+}
+
+function getOwnerPassport(supplierId) {
+  const supplier = getSupplier(supplierId);
+  if (!supplier || !supplier.active) return null;
+  return {
+    ...summarize(supplier, currentDocuments(supplierId)),
+    qrToken: supplier.qr_token,
+    qrActive: Boolean(supplier.qr_active),
+  };
 }
 
 // Lista resumida por padrao (sem o detalhe de cada documento).
@@ -59,6 +78,8 @@ module.exports = {
   getSupplier,
   currentDocuments,
   getPassport,
+  getPassportByQrToken,
+  getOwnerPassport,
   listWithSummary,
   documentHistory,
 };

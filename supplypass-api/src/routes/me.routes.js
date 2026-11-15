@@ -43,6 +43,7 @@ const insertDocument = db.prepare(`
 `);
 
 const selectDocument = db.prepare('SELECT * FROM documents WHERE id = ?');
+const rotateQr = db.prepare('UPDATE suppliers SET qr_token = ?, qr_active = 1 WHERE id = ?');
 
 // Substituir a versao anterior e inserir a nova precisa ser atomico:
 // ou as duas coisas acontecem, ou nenhuma.
@@ -66,9 +67,23 @@ router.use(authenticate, requireRole('fornecedor'));
 
 // Passaporte do proprio fornecedor logado.
 router.get('/passport', (req, res) => {
-  const passport = suppliersService.getPassport(req.user.supplierId);
+  const passport = suppliersService.getOwnerPassport(req.user.supplierId);
   if (!passport) return res.status(404).json({ error: 'Fornecedor não encontrado.' });
   res.json({ supplier: passport });
+});
+
+router.post('/qr/rotate', (req, res) => {
+  const qrToken = newId('spq');
+  rotateQr.run(qrToken, req.user.supplierId);
+
+  logs.record({
+    kind: 'acesso',
+    actor: req.user.company || req.user.name,
+    action: 'QR Code revogado e renovado',
+    target: req.user.supplierId,
+    ip: req.ip,
+  });
+  return res.json({ qrToken });
 });
 
 router.post('/documents', upload.single('file'), (req, res) => {
@@ -130,7 +145,7 @@ router.post('/documents', upload.single('file'), (req, res) => {
       expiresAt,
       encryption: 'AES-256-GCM',
     },
-    supplier: suppliersService.getPassport(supplierId),
+    supplier: suppliersService.getOwnerPassport(supplierId),
   });
 });
 

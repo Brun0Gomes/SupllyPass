@@ -37,10 +37,10 @@ const demoLogs = [
 ];
 
 const DEMO_USERS = {
-  contratante: {
+  gestor: {
     name: CONTRATANTE.user,
     company: CONTRATANTE.name,
-    role: 'contratante',
+    role: 'gestor',
     supplierId: null,
   },
   fornecedor: {
@@ -60,6 +60,7 @@ export function AppProvider({ children }) {
   const [suppliers, setSuppliers] = useState([]);
   const [mySupplier, setMySupplier] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -91,6 +92,7 @@ export function AppProvider({ children }) {
     setSuppliers(initialSuppliers);
     setMySupplier(initialSuppliers.find((s) => s.id === MY_SUPPLIER_ID) || initialSuppliers[0]);
     setLogs(demoLogs);
+    setUsers([]);
     setError(null);
   }, []);
 
@@ -101,6 +103,7 @@ export function AppProvider({ children }) {
     setSuppliers([]);
     setMySupplier(null);
     setLogs([]);
+    setUsers([]);
     setError(null);
   }, []);
 
@@ -115,13 +118,15 @@ export function AppProvider({ children }) {
       if (user.role === 'fornecedor') {
         const data = await api.myPassport(token);
         setMySupplier(supplierFromApi(data.supplier));
-      } else {
-        const [suppliersData, logsData] = await Promise.all([
-          api.suppliers(token),
-          api.logs(token),
-        ]);
+      } else if (['gestor', 'analista', 'administrador'].includes(user.role)) {
+        const requests = [api.suppliers(token)];
+        if (['gestor', 'administrador'].includes(user.role)) requests.push(api.logs(token));
+        if (user.role === 'administrador') requests.push(api.users(token));
+
+        const [suppliersData, logsData, usersData] = await Promise.all(requests);
         setSuppliers(suppliersFromApi(suppliersData.suppliers));
-        setLogs(logsFromApi(logsData.logs));
+        setLogs(logsData ? logsFromApi(logsData.logs) : []);
+        setUsers(usersData ? usersData.users : []);
       }
     } catch (err) {
       setError(err.message);
@@ -155,7 +160,7 @@ export function AppProvider({ children }) {
       if (mode === 'api') {
         const data = await api.verify(token, code);
         await refresh();
-        return data.supplier.id;
+        return { supplier: data.supplier, verifiedAt: data.verifiedAt, summary: true };
       }
 
       const supplier = suppliers.find((s) => s.id === id);
@@ -166,7 +171,7 @@ export function AppProvider({ children }) {
         action: 'Consulta de passaporte via QR Code',
         target: supplier.name,
       });
-      return supplier.id;
+      return { supplier, verifiedAt: new Date().toISOString(), summary: false };
     },
     [mode, token, suppliers, user, addLog, refresh]
   );
@@ -175,7 +180,7 @@ export function AppProvider({ children }) {
   const registerCheck = useCallback(
     async (supplier) => {
       if (mode === 'api') {
-        await api.verify(token, supplier.id);
+        await api.registerSupplierCheck(token, supplier.id);
         await refresh();
         return;
       }
@@ -233,6 +238,31 @@ export function AppProvider({ children }) {
     [suppliers, mySupplier]
   );
 
+  const createUser = useCallback(
+    async (input) => {
+      const data = await api.createUser(token, input);
+      setUsers((previous) => [...previous, data.user].sort((a, b) => a.name.localeCompare(b.name)));
+      return data.user;
+    },
+    [token]
+  );
+
+  const updateUser = useCallback(
+    async (id, changes) => {
+      const data = await api.updateUser(token, id, changes);
+      setUsers((previous) => previous.map((entry) => (entry.id === id ? data.user : entry)));
+      return data.user;
+    },
+    [token]
+  );
+
+  const rotateMyQr = useCallback(async () => {
+    if (mode !== 'api') return null;
+    const data = await api.rotateQr(token);
+    setMySupplier((previous) => (previous ? { ...previous, qrToken: data.qrToken } : previous));
+    return data.qrToken;
+  }, [mode, token]);
+
   const contratante = useMemo(
     () => ({
       name: (user && user.company) || CONTRATANTE.name,
@@ -253,6 +283,7 @@ export function AppProvider({ children }) {
       suppliers,
       mySupplier,
       logs,
+      users,
       loading,
       error,
       loginWithApi,
@@ -263,12 +294,15 @@ export function AppProvider({ children }) {
       registerCheck,
       uploadDocument,
       getSupplier,
+      createUser,
+      updateUser,
+      rotateMyQr,
       addLog,
     }),
     [
-      mode, role, user, token, contratante, suppliers, mySupplier, logs, loading, error,
+      mode, role, user, token, contratante, suppliers, mySupplier, logs, users, loading, error,
       loginWithApi, startDemo, logout, refresh, verifyCode, registerCheck, uploadDocument,
-      getSupplier, addLog,
+      getSupplier, createUser, updateUser, rotateMyQr, addLog,
     ]
   );
 

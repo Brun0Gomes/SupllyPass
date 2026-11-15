@@ -70,9 +70,15 @@ export const api = {
   docTypes: (token) => request('/doc-types', { token }),
   suppliers: (token) => request('/suppliers?full=1', { token }),
   supplier: (token, id) => request(`/suppliers/${id}`, { token }),
+  registerSupplierCheck: (token, id) => request(`/suppliers/${id}/check`, { method: 'POST', token }),
   myPassport: (token) => request('/me/passport', { token }),
   verify: (token, code) => request('/verify', { method: 'POST', token, body: { code } }),
+  rotateQr: (token) => request('/me/qr/rotate', { method: 'POST', token }),
   logs: (token) => request('/logs', { token }),
+  users: (token) => request('/users', { token }),
+  createUser: (token, user) => request('/users', { method: 'POST', token, body: user }),
+  updateUser: (token, id, changes) =>
+    request(`/users/${id}`, { method: 'PATCH', token, body: changes }),
 
   // Upload real: multipart/form-data com o arquivo escolhido no celular.
   uploadDocument: (token, { file, type, expiresAt }) => {

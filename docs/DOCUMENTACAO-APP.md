@@ -833,9 +833,9 @@ export default function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!role ? (
         <Stack.Screen name="Login" component={LoginScreen} />
-      ) : role === 'contratante' ? (
+      ) : role === 'gestor' ? (
         <Stack.Group>
-          <Stack.Screen name="ContratanteTabs" component={ContratanteTabs} />
+          <Stack.Screen name="GestorTabs" component={GestorTabs} />
           <Stack.Screen name="SupplierPassport" component={SupplierPassportScreen} />
           <Stack.Screen name="VerifyResult" component={VerifyResultScreen} />
         </Stack.Group>
@@ -850,7 +850,7 @@ export default function RootNavigator() {
 }
 ```
 
-Este é o **controle de acesso do lado do app**, e ele é estrutural: as telas da contratante
+Este é o **controle de acesso do lado do app**, e ele é estrutural: as telas do gestor
 simplesmente **não existem** na navegação quando o usuário é fornecedor. Não é um `if` que esconde
 um botão — a rota não está registrada, então nem por engano é possível chegar lá.
 
@@ -1051,7 +1051,7 @@ um protótipo de um app que parece pronto.
 ```
 
 A mesma linha serve para dois casos: clicável (do fornecedor, que envia documento) e apenas
-informativa (da contratante). O conteúdo é montado uma vez em `content` e reaproveitado.
+informativa (do gestor). O conteúdo é montado uma vez em `content` e reaproveitado.
 
 O `<>...</>` é um *fragmento*: agrupa elementos sem criar um `View` extra na árvore.
 
@@ -1074,7 +1074,7 @@ componente só desenha.
 No `KpiCard`, `flexBasis: '46%'` com `flexWrap: 'wrap'` no container produz uma grade 2×2 que se
 adapta à largura da tela — dois cartões por linha em qualquer celular.
 
-`PassportBody` é o componente compartilhado entre a tela da contratante e a do fornecedor: os dois
+`PassportBody` é o componente compartilhado entre a tela do gestor/analista e a do fornecedor: os dois
 veem exatamente o mesmo passaporte. Ele separa obrigatórios de complementares:
 
 ```jsx
@@ -1343,8 +1343,8 @@ horário mudaria a cada redesenho.
       </View>
 ```
 
-O "selo" — ícone grande, cor e frase, todos vindos do objeto de status. É a tela que a contratante
-olha por dois segundos e decide.
+O "selo" — ícone grande, cor e frase, todos vindos do objeto de status. É a tela que o gestor,
+analista ou verificador olha por dois segundos e decide.
 
 ```jsx
       {alertas.length > 0 ? ( <> ... </> ) : null}
@@ -1406,7 +1406,8 @@ O `onPress` do botão OK volta para a tela anterior, que já vai mostrar a lista
         <QRCode value={code} size={196} color={colors.text} backgroundColor={colors.white} />
 ```
 
-Uma linha gera o QR Code. O `value` é `SUPPLYPASS:FOR-1042`, montado por `passportCode()`.
+Uma linha gera o QR Code. No modo conectado, o `value` contém um token aleatório emitido pelo
+servidor, montado por `passportCode()`. O identificador do fornecedor não é exposto no QR Code.
 
 O fundo branco é obrigatório para a leitura funcionar: leitores precisam do contraste entre módulo
 escuro e fundo claro.

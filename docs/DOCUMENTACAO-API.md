@@ -184,9 +184,10 @@ CREATE TABLE IF NOT EXISTS users (
   email         TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   password_salt TEXT NOT NULL,
-  role          TEXT NOT NULL CHECK (role IN ('contratante', 'fornecedor', 'admin')),
+  role          TEXT NOT NULL CHECK (role IN ('administrador', 'gestor', 'analista', 'fornecedor', 'verificador')),
   company       TEXT,
   supplier_id   TEXT REFERENCES suppliers(id),
+  active        INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
   created_at    TEXT NOT NULL
 );
 ```
@@ -197,8 +198,9 @@ CREATE TABLE IF NOT EXISTS users (
 - `password_hash` e `password_salt` guardados separados: a senha em si nunca é armazenada.
 - `CHECK (role IN (...))` é a lista fechada de papéis. Um `INSERT` com `role = 'chefe'` é
   rejeitado pelo próprio SQLite.
-- `supplier_id` só é preenchido para usuários do tipo fornecedor; para contratante e admin fica
+- `supplier_id` só é preenchido para usuários do tipo fornecedor; para os demais perfis fica
   nulo.
+- `active` permite interromper o acesso sem apagar o histórico do usuário.
 
 ```sql
 CREATE TABLE IF NOT EXISTS documents (
@@ -603,9 +605,9 @@ function requireRole(...roles) {
 }
 ```
 
-Esta é uma **função que devolve uma função**. `requireRole('contratante','admin')` não valida
+Esta é uma **função que devolve uma função**. `requireRole('gestor','administrador')` não valida
 nada: devolve o middleware já configurado com essa lista. É o que permite escrever
-`router.use(authenticate, requireRole('contratante', 'admin'))`.
+`router.use(authenticate, requireRole('gestor', 'administrador'))`.
 
 A diferença entre os códigos importa: **401** = não sei quem você é; **403** = sei quem você é, e
 você não pode.
@@ -660,7 +662,7 @@ Rota curta e útil: o app pergunta "esse token ainda vale?" sem precisar refazer
 ## 10. `src/routes/suppliers.routes.js`
 
 ```js
-router.use(authenticate, requireRole('contratante', 'admin'));
+router.use(authenticate, requireRole('gestor', 'analista', 'administrador'));
 ```
 
 Uma linha protege **todas** as rotas do arquivo. É melhor do que repetir o middleware em cada
@@ -826,15 +828,15 @@ comportamento que se espera de um sistema de gestão documental.
 function parseCode(raw) {
   if (!raw) return null;
   const text = String(raw).trim().toUpperCase();
-  if (text.startsWith('SUPPLYPASS:')) return text.replace('SUPPLYPASS:', '');
-  if (/^FOR-\d{3,}$/.test(text)) return text;
+  const match = /^SUPPLYPASS:(SPQ_[A-F0-9]{16})$/.exec(text);
+  if (match) return match[1].toLowerCase();
   return null;
 }
 ```
 
-Aceita o conteúdo do QR (`SUPPLYPASS:FOR-1042`) ou o código digitado (`FOR-1042`), e **rejeita
-qualquer outra coisa**. Um QR de outro sistema, ou uma URL maliciosa, devolve `null` e nunca chega
-a virar consulta ao banco.
+Aceita apenas um token aleatório emitido pelo servidor, no formato `SUPPLYPASS:SPQ_<token>`, e
+**rejeita qualquer outra coisa**. O token não revela o ID do fornecedor e pode ser revogado e
+gerado novamente pelo fornecedor.
 
 ```js
 router.post('/', verifyHandler);

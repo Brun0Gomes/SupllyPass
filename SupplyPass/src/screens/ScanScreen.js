@@ -11,7 +11,7 @@ import { useApp } from '../context/AppContext';
 import { colors, radius, spacing } from '../theme';
 
 export default function ScanScreen({ navigation }) {
-  const { suppliers, verifyCode } = useApp();
+  const { suppliers, verifyCode, mode } = useApp();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,8 +27,8 @@ export default function ScanScreen({ navigation }) {
   const verify = async (raw) => {
     setBusy(true);
     try {
-      const id = await verifyCode(raw);
-      navigation.navigate('VerifyResult', { id });
+      const result = await verifyCode(raw);
+      navigation.navigate('VerifyResult', { result });
     } catch (error) {
       Alert.alert('Código não reconhecido', error.message, [
         { text: 'Tentar de novo', onPress: () => setScanned(false) },
@@ -87,7 +87,7 @@ export default function ScanScreen({ navigation }) {
           <TextInput
             value={manual}
             onChangeText={setManual}
-            placeholder="Ex.: FOR-1042"
+            placeholder="Cole ou digite o código do QR"
             placeholderTextColor={colors.textLight}
             autoCapitalize="characters"
             style={styles.input}
@@ -98,14 +98,18 @@ export default function ScanScreen({ navigation }) {
           </Pressable>
         </View>
 
-        <Text style={styles.demoLabel}>Códigos da demonstração</Text>
-        <View style={styles.demoChips}>
-          {suppliers.slice(0, 4).map((supplier) => (
-            <Pressable key={supplier.id} onPress={() => verify(supplier.id)} style={styles.demoChip}>
-              <Text style={styles.demoChipText}>{supplier.id}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {mode === 'demo' ? (
+          <>
+            <Text style={styles.demoLabel}>Códigos da demonstração</Text>
+            <View style={styles.demoChips}>
+              {suppliers.slice(0, 4).map((supplier) => (
+                <Pressable key={supplier.id} onPress={() => verify(supplier.id)} style={styles.demoChip}>
+                  <Text style={styles.demoChipText}>{supplier.id}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
       </Card>
 
       <View style={styles.note}>

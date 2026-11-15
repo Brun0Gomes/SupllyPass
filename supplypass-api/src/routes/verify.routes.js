@@ -2,23 +2,23 @@ const express = require('express');
 
 const suppliers = require('../services/suppliers');
 const logs = require('../services/logs');
-const { authenticate, actorOf } = require('../middleware/auth');
+const { authenticate, requireRole, actorOf } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Aceita "SUPPLYPASS:FOR-1042" (conteudo do QR Code) ou apenas "FOR-1042".
+// Aceita apenas o token aleatório presente no QR Code, nunca o ID do fornecedor.
 function parseCode(raw) {
   if (!raw) return null;
   const text = String(raw).trim().toUpperCase();
-  if (text.startsWith('SUPPLYPASS:')) return text.replace('SUPPLYPASS:', '');
-  if (/^FOR-\d{3,}$/.test(text)) return text;
+  const match = /^SUPPLYPASS:(SPQ_[A-F0-9]{16})$/.exec(text);
+  if (match) return match[1].toLowerCase();
   return null;
 }
 
 function verifyHandler(req, res) {
   const raw = (req.body && req.body.code) || req.params.code;
-  const id = parseCode(raw);
-  const passport = id ? suppliers.getPassport(id) : null;
+  const token = parseCode(raw);
+  const passport = token ? suppliers.getPassportByQrToken(token) : null;
 
   if (!passport) {
     logs.record({
@@ -63,7 +63,7 @@ function verifyHandler(req, res) {
   });
 }
 
-router.use(authenticate);
+router.use(authenticate, requireRole('administrador', 'gestor', 'analista', 'verificador'));
 router.post('/', verifyHandler);
 router.get('/:code', verifyHandler);
 
