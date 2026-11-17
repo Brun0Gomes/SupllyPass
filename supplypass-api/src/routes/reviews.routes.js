@@ -4,6 +4,7 @@ const db = require('../db');
 const logs = require('../services/logs');
 const suppliers = require('../services/suppliers');
 const { authenticate, requireRole, actorOf } = require('../middleware/auth');
+const { authenticatedLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ const updateDecision = db.prepare(`
   WHERE id = @id AND superseded_at IS NULL AND review_status = 'pending'
 `);
 
-router.use(authenticate, requireRole('analista'));
+router.use(authenticate, requireRole('analista'), authenticatedLimiter);
 
 // A fila contém somente a versão vigente de cada documento. Uma versão nova
 // substitui a anterior e recebe uma nova análise, sem apagar o histórico.

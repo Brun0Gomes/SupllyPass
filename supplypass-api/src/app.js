@@ -11,12 +11,32 @@ const verifyRoutes = require('./routes/verify.routes');
 const logsRoutes = require('./routes/logs.routes');
 const usersRoutes = require('./routes/users.routes');
 const reviewsRoutes = require('./routes/reviews.routes');
+const { globalApiLimiter } = require('./middleware/rate-limit');
 
 const app = express();
 
-// O app roda no celular, em outro dispositivo: o navegador/RN precisa de CORS liberado.
-app.use(cors());
+// O aplicativo nativo não envia Origin. Em navegador, só origens explicitamente
+// permitidas passam; em produção, defina CORS_ORIGINS no .env.
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || config.corsOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Origem não permitida pelo CORS.'));
+  },
+  methods: ['GET', 'POST', 'PATCH'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+}));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'camera=(self)');
+  if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  return next();
+});
 app.use(express.json({ limit: '1mb' }));
+app.use('/api', globalApiLimiter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'supplypass-api', now: new Date().toISOString() });

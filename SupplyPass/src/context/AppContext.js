@@ -418,8 +418,8 @@ export function AppProvider({ children }) {
   const rotateMyQr = useCallback(async () => {
     if (mode !== 'api') return null;
     const data = await api.rotateQr(token);
-    setMySupplier((previous) => (previous ? { ...previous, qrToken: data.qrToken } : previous));
-    return data.qrToken;
+    setMySupplier((previous) => (previous ? { ...previous, qrToken: data.qrToken, qrCode: data.qrCode } : previous));
+    return data.qrCode;
   }, [mode, token]);
 
   const contratante = useMemo(

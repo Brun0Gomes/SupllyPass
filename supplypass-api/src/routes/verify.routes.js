@@ -3,6 +3,8 @@ const express = require('express');
 const suppliers = require('../services/suppliers');
 const logs = require('../services/logs');
 const { authenticate, requireRole, actorOf } = require('../middleware/auth');
+const { verifyQrSignature } = require('../services/qr');
+const { authenticatedLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 
@@ -10,8 +12,8 @@ const router = express.Router();
 function parseCode(raw) {
   if (!raw) return null;
   const text = String(raw).trim().toUpperCase();
-  const match = /^SUPPLYPASS:(SPQ_[A-F0-9]{16})$/.exec(text);
-  if (match) return match[1].toLowerCase();
+  const match = /^SUPPLYPASS:(SPQ_[A-F0-9]{16})\.([A-F0-9]{16})$/.exec(text);
+  if (match && verifyQrSignature(match[1].toLowerCase(), match[2])) return match[1].toLowerCase();
   return null;
 }
 
@@ -63,7 +65,7 @@ function verifyHandler(req, res) {
   });
 }
 
-router.use(authenticate, requireRole('administrador', 'gestor', 'analista', 'verificador'));
+router.use(authenticate, requireRole('administrador', 'gestor', 'analista', 'verificador'), authenticatedLimiter);
 router.post('/', verifyHandler);
 router.get('/:code', verifyHandler);
 

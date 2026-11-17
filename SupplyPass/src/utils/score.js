@@ -177,7 +177,7 @@ export function summarize(supplier) {
 
 // Codigo lido/gravado no QR Code.
 export function passportCode(supplier) {
-  return `SUPPLYPASS:${supplier.qrToken || supplier.id}`;
+  return supplier.qrCode || `SUPPLYPASS:${supplier.qrToken || supplier.id}`;
 }
 
 export function parsePassportCode(raw) {

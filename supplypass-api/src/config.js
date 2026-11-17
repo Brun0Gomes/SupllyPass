@@ -23,6 +23,13 @@ function positiveInteger(name, fallback, { max } = {}) {
   return value;
 }
 
+function commaSeparated(name) {
+  return String(process.env[name] || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 const rootDir = path.resolve(__dirname, '..');
 const dataDir = path.join(rootDir, 'data');
 const storageDir = path.join(rootDir, 'storage');
@@ -61,6 +68,8 @@ module.exports = {
   loginMaxAttempts: positiveInteger('LOGIN_MAX_ATTEMPTS', 5, { max: 20 }),
   loginLockMinutes: positiveInteger('LOGIN_LOCK_MINUTES', 15, { max: 1440 }),
   totpIssuer: process.env.TOTP_ISSUER || 'SupplyPass',
+  corsOrigins: commaSeparated('CORS_ORIGINS'),
+  qrSigningSecret: String(process.env.QR_SIGNING_SECRET || jwtSecret),
   dbFile: process.env.DB_FILE || path.join(dataDir, 'supplypass.db'),
   dataDir,
   storageDir,

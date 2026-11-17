@@ -4,11 +4,12 @@ const suppliers = require('../services/suppliers');
 const logs = require('../services/logs');
 const { DOC_TYPE_MAP } = require('../services/score');
 const { authenticate, requireRole, actorOf } = require('../middleware/auth');
+const { authenticatedLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 
 // Gestor, analista e administrador podem consultar os passaportes.
-router.use(authenticate, requireRole('gestor', 'analista', 'administrador'));
+router.use(authenticate, requireRole('gestor', 'analista', 'administrador'), authenticatedLimiter);
 
 // ?full=1 traz tambem o detalhe dos 7 documentos de cada fornecedor.
 // O app usa essa versao para montar o painel com uma unica requisicao.

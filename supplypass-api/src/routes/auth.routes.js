@@ -7,6 +7,7 @@ const logs = require('../services/logs');
 const { verifyPassword } = require('../services/crypto');
 const { generateSecret, verifyCode, otpauthUrl } = require('../services/totp');
 const { authenticate, createSession } = require('../middleware/auth');
+const { loginLimiter, authenticatedLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 const findUser = db.prepare('SELECT * FROM users WHERE email = ?');
@@ -51,7 +52,7 @@ function readMfaToken(req) {
   return scheme === 'Bearer' ? token : null;
 }
 
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { email, password } = req.body || {};
 
   if (!email || !password) {
@@ -155,14 +156,14 @@ router.post('/mfa/verify', (req, res) => {
   return res.json(session);
 });
 
-router.post('/logout', authenticate, (req, res) => {
+router.post('/logout', authenticate, authenticatedLimiter, (req, res) => {
   db.prepare('UPDATE sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL')
     .run(new Date().toISOString(), req.sessionId);
   logs.record({ kind: 'acesso', actor: actorOf(req.user), action: 'Logout autorizado', target: 'API', ip: req.ip });
   return res.status(204).end();
 });
 
-router.get('/me', authenticate, (req, res) => {
+router.get('/me', authenticate, authenticatedLimiter, (req, res) => {
   res.json({ user: req.user });
 });
 

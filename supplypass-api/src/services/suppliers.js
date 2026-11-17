@@ -1,5 +1,6 @@
 const db = require('../db');
 const { summarize, DOC_TYPE_MAP } = require('./score');
+const { formatQrCode } = require('./qr');
 
 const selectSuppliers = db.prepare('SELECT * FROM suppliers WHERE active = 1 ORDER BY name');
 const selectSupplier = db.prepare('SELECT * FROM suppliers WHERE id = ?');
@@ -93,6 +94,7 @@ function getOwnerPassport(supplierId) {
   return {
     ...summarize(supplier, currentDocuments(supplierId)),
     qrToken: supplier.qr_token,
+    qrCode: formatQrCode(supplier.qr_token),
     qrActive: Boolean(supplier.qr_active),
   };
 }

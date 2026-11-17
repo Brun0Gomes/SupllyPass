@@ -131,6 +131,10 @@ curl -s -X POST http://localhost:3333/api/verify \
 | Criptografia em repouso | AES-256-GCM; o arquivo é cifrado **em memória**, antes de tocar o disco |
 | Integridade | SHA-256 do arquivo original gravado no banco e reconferido em todo download |
 | Antiadulteração | o `authTag` do GCM faz a decifragem falhar se o arquivo cifrado for alterado |
+| Upload seguro | MIME declarado e assinatura real do conteúdo precisam corresponder a PDF, PNG ou JPG antes da cifragem |
+| QR Code | token aleatório recebe assinatura HMAC; alteração do código é recusada antes da busca no banco |
+| Limite de requisições | limite global por IP, limite de login e limite por usuário autenticado em memória; para múltiplas instâncias, migrar para Redis |
+| HTTP | CORS por lista permitida, headers anti-frame/sniffing e HSTS quando a conexão chega por HTTPS |
 | Auditoria | tabela `audit_logs` recebe eventos da aplicação; centralização e retenção externa estão planejadas |
 | Versionamento | o documento antigo recebe `superseded_at`; nada é apagado |
 | Análise documental | novo envio começa `pending`; só `approved` pontua. Reprovação armazena motivo e responsável |

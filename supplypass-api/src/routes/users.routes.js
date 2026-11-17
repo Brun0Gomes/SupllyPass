@@ -5,6 +5,7 @@ const logs = require('../services/logs');
 const { hashPassword, newId } = require('../services/crypto');
 const { isRole, publicUser } = require('../services/users');
 const { authenticate, requireRole, actorOf } = require('../middleware/auth');
+const { authenticatedLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 
@@ -58,7 +59,7 @@ function userInput(body, { creating = false } = {}) {
   return { value: { name, email, password, role, company: company || null, supplierId } };
 }
 
-router.use(authenticate, requireRole('administrador'));
+router.use(authenticate, requireRole('administrador'), authenticatedLimiter);
 
 router.get('/', (req, res) => {
   res.json({ users: listUsers.all().map(publicUser) });

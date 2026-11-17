@@ -161,6 +161,7 @@ documental e trilha de auditoria gravada no servidor.
 
 Gestor e Administrador configuram MFA TOTP no primeiro login conectado. A API encerra sessões que
 ficam 30 minutos sem atividade e bloqueia uma conta por 15 minutos após cinco senhas inválidas.
+No modo conectado, o QR Code também é assinado pelo servidor; códigos adulterados são recusados.
 
 **Simulado no modo demonstração:** não há servidor — os dados vivem na memória do app e voltam ao
 estado inicial ao recarregar; o hash é gerado localmente só para ilustrar o conceito.

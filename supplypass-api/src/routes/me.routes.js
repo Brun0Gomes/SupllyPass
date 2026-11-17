@@ -10,6 +10,9 @@ const suppliersService = require('../services/suppliers');
 const { DOC_TYPE_MAP } = require('../services/score');
 const { sha256, encryptBuffer, decryptBuffer, newId } = require('../services/crypto');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { detectAllowedFile } = require('../services/file-validation');
+const { formatQrCode } = require('../services/qr');
+const { authenticatedLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 
@@ -65,7 +68,7 @@ function normalizeDate(value) {
   return iso;
 }
 
-router.use(authenticate, requireRole('fornecedor'));
+router.use(authenticate, requireRole('fornecedor'), authenticatedLimiter);
 
 // Passaporte do proprio fornecedor logado.
 router.get('/passport', (req, res) => {
@@ -85,7 +88,7 @@ router.post('/qr/rotate', (req, res) => {
     target: req.user.supplierId,
     ip: req.ip,
   });
-  return res.json({ qrToken });
+  return res.json({ qrToken, qrCode: formatQrCode(qrToken) });
 });
 
 router.post('/documents', upload.single('file'), (req, res) => {
@@ -97,6 +100,10 @@ router.post('/documents', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Envie o arquivo no campo "file".' });
   if (!DOC_TYPE_MAP[type]) return res.status(400).json({ error: 'Tipo de documento inválido.' });
   if (!expiresAt) return res.status(400).json({ error: 'Informe a validade (AAAA-MM-DD).' });
+  const detectedFile = detectAllowedFile(req.file.buffer);
+  if (!detectedFile || detectedFile.mimeType !== req.file.mimetype) {
+    return res.status(400).json({ error: 'O conteúdo do arquivo não confere com PDF, PNG ou JPG válido.' });
+  }
 
   // 1. Hash do arquivo ORIGINAL: e ele que prova a integridade depois.
   const digest = sha256(req.file.buffer);
@@ -115,7 +122,7 @@ router.post('/documents', upload.single('file'), (req, res) => {
     type,
     file_name: req.file.originalname,
     stored_name: storedName,
-    mime_type: req.file.mimetype,
+    mime_type: detectedFile.mimeType,
     size_bytes: req.file.size,
     sha256: digest,
     iv,
