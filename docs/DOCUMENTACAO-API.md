@@ -218,7 +218,11 @@ CREATE TABLE IF NOT EXISTS documents (
   expires_at    TEXT NOT NULL,
   uploaded_by   TEXT,
   uploaded_at   TEXT NOT NULL,
-  superseded_at TEXT
+  superseded_at TEXT,
+  review_status TEXT NOT NULL DEFAULT 'approved',
+  review_note   TEXT,
+  reviewed_by   TEXT,
+  reviewed_at   TEXT
 );
 ```
 
@@ -233,6 +237,9 @@ Colunas que merecem atenção:
 | `auth_tag` | selo do modo GCM; sem ele a decifragem não é validada |
 | `expires_at` | a data que alimenta todo o cálculo de status |
 | `superseded_at` | `NULL` = versão vigente. Preenchido = versão antiga, mantida no histórico |
+| `review_status` | `pending`, `approved` ou `rejected`; uma nova versão sempre começa pendente |
+| `review_note` | justificativa deixada pelo Analista ao reprovar |
+| `reviewed_by` / `reviewed_at` | quem decidiu e quando, para a rastreabilidade |
 
 `ON DELETE CASCADE`: apagar um fornecedor apaga seus documentos, sem deixar registro órfão.
 
@@ -243,6 +250,20 @@ CREATE INDEX IF NOT EXISTS idx_documents_current
 
 A consulta mais frequente do sistema é "documentos vigentes deste fornecedor", que filtra
 exatamente por essas três colunas. O índice existe para ela.
+
+### Fluxo de análise documental
+
+O envio do fornecedor cria uma versão com `review_status = 'pending'`. A rota
+`GET /api/reviews?status=pending`, exclusiva do **Analista**, monta a fila com os metadados do
+arquivo e do fornecedor. A decisão é enviada para `POST /api/reviews/:id/decision`:
+
+```json
+{ "decision": "rejected", "note": "A certidão está vencida; envie uma versão vigente." }
+```
+
+Só a versão vigente e ainda pendente pode receber decisão. Isso evita que uma análise atrasada
+altere um documento já substituído. A reprovação exige justificativa, toda decisão entra em
+`audit_logs` e um documento pendente ou reprovado soma zero no Supplier Score.
 
 ```sql
 CREATE TABLE IF NOT EXISTS audit_logs (

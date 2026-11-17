@@ -26,6 +26,8 @@ function daysUntil(iso) {
 
 function statusOf(document) {
   if (!document || !document.expires_at) return 'pendente';
+  if (document.review_status === 'pending') return 'em_analise';
+  if (document.review_status === 'rejected') return 'reprovado';
   const days = daysUntil(document.expires_at);
   if (days < 0) return 'vencido';
   if (days <= config.alertWindowDays) return 'vencendo';
@@ -54,6 +56,10 @@ function buildPassport(documents) {
             uploadedAt: document.uploaded_at,
             sizeBytes: document.size_bytes,
             downloadable: Boolean(document.stored_name),
+            reviewStatus: document.review_status || 'approved',
+            reviewNote: document.review_note || null,
+            reviewedBy: document.reviewed_by || null,
+            reviewedAt: document.reviewed_at || null,
           }
         : null,
     };
@@ -70,10 +76,10 @@ function calcScore(passport) {
   return Math.round(total);
 }
 
-// Qualquer documento OBRIGATORIO vencido ou ausente bloqueia a contratacao.
+// Qualquer documento obrigatório vencido, ausente ou sem aprovação bloqueia a contratação.
 function overallStatus(passport) {
   const blocking = passport.some(
-    (item) => item.required && (item.status === 'vencido' || item.status === 'pendente')
+    (item) => item.required && ['vencido', 'pendente', 'em_analise', 'reprovado'].includes(item.status)
   );
   if (blocking) return 'irregular';
   const anyProblem = passport.some((item) => item.status !== 'valido');
@@ -95,7 +101,9 @@ function summarize(supplier, documents) {
     counts: {
       validos: passport.filter((i) => i.status === 'valido').length,
       vencendo: passport.filter((i) => i.status === 'vencendo').length,
-      pendentes: passport.filter((i) => i.status === 'vencido' || i.status === 'pendente').length,
+      pendentes: passport.filter((i) =>
+        ['vencido', 'pendente', 'em_analise', 'reprovado'].includes(i.status)
+      ).length,
     },
     passport,
   };

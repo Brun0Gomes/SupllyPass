@@ -49,7 +49,35 @@ const DEMO_USERS = {
     role: 'fornecedor',
     supplierId: MY_SUPPLIER_ID,
   },
+  analista: {
+    name: 'Marina Costa',
+    company: CONTRATANTE.name,
+    role: 'analista',
+    supplierId: null,
+  },
 };
+
+function reviewQueueFromSuppliers(source) {
+  return source.flatMap((supplier) =>
+    (supplier.documents || [])
+      .filter((document) => document.reviewStatus === 'pending')
+      .map((document) => ({
+        id: document.id || `demo-review:${supplier.id}:${document.type}`,
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        supplierCnpj: supplier.cnpj,
+        type: document.type,
+        label: DOC_TYPE_MAP[document.type]?.label || document.type,
+        fileName: document.file,
+        issuedAt: document.issuedAt,
+        expiresAt: document.expiresAt,
+        uploadedAt: document.uploadedAt || new Date().toISOString(),
+        reviewStatus: 'pending',
+        reviewNote: null,
+        current: true,
+      }))
+  );
+}
 
 export function AppProvider({ children }) {
   // mode: null (deslogado) | 'api' (conectado ao servidor) | 'demo' (dados locais)
@@ -61,6 +89,7 @@ export function AppProvider({ children }) {
   const [mySupplier, setMySupplier] = useState(null);
   const [logs, setLogs] = useState([]);
   const [users, setUsers] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -93,6 +122,7 @@ export function AppProvider({ children }) {
     setMySupplier(initialSuppliers.find((s) => s.id === MY_SUPPLIER_ID) || initialSuppliers[0]);
     setLogs(demoLogs);
     setUsers([]);
+    setReviews(reviewQueueFromSuppliers(initialSuppliers));
     setError(null);
   }, []);
 
@@ -104,6 +134,7 @@ export function AppProvider({ children }) {
     setMySupplier(null);
     setLogs([]);
     setUsers([]);
+    setReviews([]);
     setError(null);
   }, []);
 
@@ -119,12 +150,14 @@ export function AppProvider({ children }) {
         const data = await api.myPassport(token);
         setMySupplier(supplierFromApi(data.supplier));
       } else if (['gestor', 'analista', 'administrador'].includes(user.role)) {
-        const requests = [api.suppliers(token)];
-        if (['gestor', 'administrador'].includes(user.role)) requests.push(api.logs(token));
-        if (user.role === 'administrador') requests.push(api.users(token));
-
-        const [suppliersData, logsData, usersData] = await Promise.all(requests);
+        const [suppliersData, reviewsData, logsData, usersData] = await Promise.all([
+          api.suppliers(token),
+          user.role === 'analista' ? api.reviews(token) : Promise.resolve(null),
+          ['gestor', 'administrador'].includes(user.role) ? api.logs(token) : Promise.resolve(null),
+          user.role === 'administrador' ? api.users(token) : Promise.resolve(null),
+        ]);
         setSuppliers(suppliersFromApi(suppliersData.suppliers));
+        setReviews(reviewsData ? reviewsData.reviews || [] : []);
         setLogs(logsData ? logsFromApi(logsData.logs) : []);
         setUsers(usersData ? usersData.users : []);
       }
@@ -201,12 +234,25 @@ export function AppProvider({ children }) {
       if (mode === 'api') {
         const data = await api.uploadDocument(token, { file, type, expiresAt });
         setMySupplier(supplierFromApi(data.supplier));
-        return { hash: data.document.sha256, fileName: data.document.fileName, real: true };
+        return {
+          hash: data.document.sha256,
+          fileName: data.document.fileName,
+          real: true,
+          reviewStatus: data.document.reviewStatus,
+        };
       }
 
       const fileName = (file && file.name) || `${type}_${new Date().getFullYear()}.pdf`;
       const hash = fakeHash(`${MY_SUPPLIER_ID}|${type}|${fileName}|${expiresAt}`);
-      const document = { type, file: fileName, issuedAt: new Date().toISOString().slice(0, 10), expiresAt, hash };
+      const document = {
+        id: `demo-doc-${Date.now()}`,
+        type,
+        file: fileName,
+        issuedAt: new Date().toISOString().slice(0, 10),
+        expiresAt,
+        hash,
+        reviewStatus: 'pending',
+      };
 
       setMySupplier((prev) => {
         const rest = (prev.documents || []).filter((d) => d.type !== type);
@@ -219,15 +265,86 @@ export function AppProvider({ children }) {
           return { ...s, documents: [...rest, document] };
         })
       );
+      setReviews((previous) => [
+        {
+          id: document.id,
+          supplierId: MY_SUPPLIER_ID,
+          supplierName: user.company,
+          supplierCnpj: mySupplier?.cnpj || '',
+          type,
+          label: DOC_TYPE_MAP[type].label,
+          fileName,
+          issuedAt: document.issuedAt,
+          expiresAt,
+          uploadedAt: new Date().toISOString(),
+          reviewStatus: 'pending',
+          reviewNote: null,
+          current: true,
+        },
+        ...previous.filter((entry) => !(entry.supplierId === MY_SUPPLIER_ID && entry.type === type)),
+      ]);
       addLog({
         kind: 'upload',
         actor: user.company,
-        action: `Envio de documento (${DOC_TYPE_MAP[type].label})`,
+        action: `Envio de documento para análise (${DOC_TYPE_MAP[type].label})`,
         target: fileName,
       });
-      return { hash, fileName, real: false };
+      return { hash, fileName, real: false, reviewStatus: 'pending' };
     },
-    [mode, token, user, addLog]
+    [mode, token, user, mySupplier, addLog]
+  );
+
+  const reviewDocument = useCallback(
+    async (id, { decision, note }) => {
+      if (mode === 'api') {
+        const data = await api.reviewDocument(token, id, { decision, note });
+        await refresh();
+        return data.review;
+      }
+
+      const review = reviews.find((entry) => entry.id === id);
+      if (!review) throw new Error('Este documento não está mais na fila de análise.');
+      const reviewedAt = new Date().toISOString();
+      const reviewedDocument = (document) => ({
+        ...document,
+        reviewStatus: decision,
+        reviewNote: decision === 'rejected' ? note : null,
+        reviewedBy: user.name,
+        reviewedAt,
+      });
+
+      setSuppliers((previous) =>
+        previous.map((supplier) =>
+          supplier.id !== review.supplierId
+            ? supplier
+            : {
+                ...supplier,
+                documents: (supplier.documents || []).map((document) =>
+                  document.type === review.type ? reviewedDocument(document) : document
+                ),
+              }
+        )
+      );
+      setMySupplier((previous) =>
+        !previous || previous.id !== review.supplierId
+          ? previous
+          : {
+              ...previous,
+              documents: (previous.documents || []).map((document) =>
+                document.type === review.type ? reviewedDocument(document) : document
+              ),
+            }
+      );
+      setReviews((previous) => previous.filter((entry) => entry.id !== id));
+      addLog({
+        kind: 'analise',
+        actor: `${user.name} · ${user.company}`,
+        action: decision === 'approved' ? 'Documento aprovado na análise' : 'Documento reprovado na análise',
+        target: `${review.supplierName} · ${review.label}${note ? ` · ${note}` : ''}`,
+      });
+      return { ...review, reviewStatus: decision, reviewNote: note || null, reviewedAt };
+    },
+    [mode, token, refresh, reviews, user, addLog]
   );
 
   const getSupplier = useCallback(
@@ -284,6 +401,7 @@ export function AppProvider({ children }) {
       mySupplier,
       logs,
       users,
+      reviews,
       loading,
       error,
       loginWithApi,
@@ -297,12 +415,13 @@ export function AppProvider({ children }) {
       createUser,
       updateUser,
       rotateMyQr,
+      reviewDocument,
       addLog,
     }),
     [
-      mode, role, user, token, contratante, suppliers, mySupplier, logs, users, loading, error,
+      mode, role, user, token, contratante, suppliers, mySupplier, logs, users, reviews, loading, error,
       loginWithApi, startDemo, logout, refresh, verifyCode, registerCheck, uploadDocument,
-      getSupplier, createUser, updateUser, rotateMyQr, addLog,
+      getSupplier, createUser, updateUser, rotateMyQr, reviewDocument, addLog,
     ]
   );
 

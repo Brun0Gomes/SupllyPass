@@ -22,6 +22,7 @@ import { colors, radius, spacing } from '../theme';
 
 const CONTAS = [
   { label: 'Gestor', email: 'compras@meridiano.com.br' },
+  { label: 'Analista', email: 'analise@meridiano.com.br' },
   { label: 'Fornecedor', email: 'contato@novatech.com.br' },
 ];
 
@@ -204,6 +205,13 @@ export default function LoginScreen() {
                 icon="business-outline"
                 variant="outline"
                 onPress={() => startDemo('gestor')}
+                style={{ flex: 1 }}
+              />
+              <PrimaryButton
+                label="Analista"
+                icon="checkbox-outline"
+                variant="outline"
+                onPress={() => startDemo('analista')}
                 style={{ flex: 1 }}
               />
               <PrimaryButton

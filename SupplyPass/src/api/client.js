@@ -79,6 +79,9 @@ export const api = {
   createUser: (token, user) => request('/users', { method: 'POST', token, body: user }),
   updateUser: (token, id, changes) =>
     request(`/users/${id}`, { method: 'PATCH', token, body: changes }),
+  reviews: (token, status = 'pending') => request(`/reviews?status=${encodeURIComponent(status)}`, { token }),
+  reviewDocument: (token, id, decision) =>
+    request(`/reviews/${id}/decision`, { method: 'POST', token, body: decision }),
 
   // Upload real: multipart/form-data com o arquivo escolhido no celular.
   uploadDocument: (token, { file, type, expiresAt }) => {

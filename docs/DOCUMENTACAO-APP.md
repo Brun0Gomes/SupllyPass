@@ -6,6 +6,10 @@ JavaScript puro.
 A ordem segue de baixo para cima: primeiro a configuração e as regras, depois o estado, depois os
 componentes e por fim as telas.
 
+> Atualização — o ciclo documental possui quatro estados visíveis: não enviado, em análise,
+> aprovado (válido ou vencendo, conforme a data) e reprovado. A fila e a decisão pertencem ao
+> perfil **Analista**; o motivo da reprovação volta para a tela do **Fornecedor**.
+
 **Sumário**
 
 - [Antes de começar: os conceitos de React usados](#antes-de-começar-os-conceitos-de-react-usados)
@@ -21,6 +25,16 @@ componentes e por fim as telas.
 - [10. `App.js` e `src/navigation/RootNavigator.js`](#10-appjs-e-srcnavigationrootnavigatorjs)
 - [11. Componentes](#11-componentes)
 - [12. Telas](#12-telas)
+
+### Fluxo de análise documental
+
+`AppContext` guarda também `reviews`, a fila devolvida por `GET /reviews?status=pending`. Ao
+entrar como Analista, a aba **Análises** mostra somente as versões atuais pendentes. A tela de
+decisão chama `reviewDocument(id, { decision, note })`; no modo conectado ela usa a API e recarrega
+o passaporte, e no modo de demonstração atualiza a mesma estrutura em memória.
+
+Uma reprovação exige uma justificativa. O fornecedor recebe esse texto em `DocumentRow` e pode
+reenviar o tipo documental; a versão anterior continua no histórico e a nova volta à fila.
 
 ---
 

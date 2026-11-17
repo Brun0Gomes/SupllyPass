@@ -53,7 +53,12 @@ db.exec(`
     expires_at    TEXT NOT NULL,
     uploaded_by   TEXT,
     uploaded_at   TEXT NOT NULL,
-    superseded_at TEXT
+    superseded_at TEXT,
+    review_status TEXT NOT NULL DEFAULT 'approved'
+      CHECK (review_status IN ('pending', 'approved', 'rejected')),
+    review_note   TEXT,
+    reviewed_by   TEXT,
+    reviewed_at   TEXT
   );
 
   CREATE INDEX IF NOT EXISTS idx_documents_current
@@ -146,5 +151,35 @@ function migrateSuppliersTable() {
 }
 
 migrateSuppliersTable();
+
+// Antes desta etapa, os documentos não tinham uma decisão de análise. Os
+// registros existentes representam acervo já aceito, portanto começam como
+// "approved"; apenas os próximos envios entram na fila como "pending".
+function migrateDocumentsTable() {
+  const columns = db.prepare('PRAGMA table_info(documents)').all();
+  const names = new Set(columns.map((column) => column.name));
+
+  if (!names.has('review_status')) {
+    db.exec(`
+      ALTER TABLE documents ADD COLUMN review_status TEXT NOT NULL DEFAULT 'approved'
+        CHECK (review_status IN ('pending', 'approved', 'rejected'))
+    `);
+  }
+  if (!names.has('review_note')) db.exec('ALTER TABLE documents ADD COLUMN review_note TEXT');
+  if (!names.has('reviewed_by')) db.exec('ALTER TABLE documents ADD COLUMN reviewed_by TEXT');
+  if (!names.has('reviewed_at')) db.exec('ALTER TABLE documents ADD COLUMN reviewed_at TEXT');
+
+  db.exec(`
+    UPDATE documents
+    SET review_status = 'approved'
+    WHERE review_status IS NULL OR review_status NOT IN ('pending', 'approved', 'rejected')
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_documents_review_queue
+      ON documents (review_status, superseded_at, uploaded_at DESC)
+  `);
+}
+
+migrateDocumentsTable();
 
 module.exports = db;

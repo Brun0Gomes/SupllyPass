@@ -45,7 +45,7 @@ export default function MyPassportScreen({ navigation }) {
               {pendencias} {pendencias === 1 ? 'item precisa' : 'itens precisam'} da sua atenção
             </Text>
             <Text style={styles.ctaText}>
-              Regularize agora para subir o seu score e continuar apto a contratos.
+              Corrija itens reprovados ou aguarde a análise para subir o score e continuar apto a contratos.
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.amber} />

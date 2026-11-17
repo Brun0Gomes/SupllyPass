@@ -53,6 +53,22 @@ export const DOC_STATUS = {
     soft: colors.redSoft,
     icon: 'ellipse-outline',
   },
+  em_analise: {
+    key: 'em_analise',
+    label: 'Em análise',
+    mark: '⏳',
+    color: colors.primary,
+    soft: colors.primarySoft,
+    icon: 'time',
+  },
+  reprovado: {
+    key: 'reprovado',
+    label: 'Reprovado',
+    mark: '❌',
+    color: colors.red,
+    soft: colors.redSoft,
+    icon: 'close-circle',
+  },
 };
 
 export const OVERALL_STATUS = {
@@ -91,6 +107,8 @@ export const OVERALL_STATUS = {
 // Status de um unico documento.
 export function getDocStatus(doc) {
   if (!doc || !doc.expiresAt) return DOC_STATUS.pendente;
+  if (doc.reviewStatus === 'pending') return DOC_STATUS.em_analise;
+  if (doc.reviewStatus === 'rejected') return DOC_STATUS.reprovado;
   const days = daysUntil(doc.expiresAt);
   if (days < 0) return DOC_STATUS.vencido;
   if (days <= ALERT_WINDOW_DAYS) return DOC_STATUS.vencendo;
@@ -112,7 +130,7 @@ export function getPassport(supplier) {
 }
 
 // Supplier Score: valido soma o peso inteiro, vencendo soma metade,
-// vencido ou pendente soma zero.
+// vencido, pendente, em análise ou reprovado soma zero.
 export function calcScore(supplier) {
   const passport = getPassport(supplier);
   const total = passport.reduce((sum, item) => {
@@ -123,16 +141,16 @@ export function calcScore(supplier) {
   return Math.round(total);
 }
 
-// Status geral: qualquer obrigatorio vencido/pendente derruba para irregular.
+// Status geral: qualquer obrigatório vencido, ausente ou sem aprovação derruba para irregular.
 export function getOverallStatus(supplier) {
   const passport = getPassport(supplier);
   const blocking = passport.some(
-    (item) => item.required && (item.status.key === 'vencido' || item.status.key === 'pendente')
+    (item) =>
+      item.required &&
+      ['vencido', 'pendente', 'em_analise', 'reprovado'].includes(item.status.key)
   );
   if (blocking) return OVERALL_STATUS.irregular;
-  const anyProblem = passport.some(
-    (item) => item.status.key === 'vencido' || item.status.key === 'pendente' || item.status.key === 'vencendo'
-  );
+  const anyProblem = passport.some((item) => item.status.key !== 'valido');
   if (anyProblem) return OVERALL_STATUS.atencao;
   return OVERALL_STATUS.regular;
 }
@@ -151,7 +169,9 @@ export function summarize(supplier) {
     overall: getOverallStatus(supplier),
     validos: passport.filter((i) => i.status.key === 'valido').length,
     vencendo: passport.filter((i) => i.status.key === 'vencendo').length,
-    problemas: passport.filter((i) => i.status.key === 'vencido' || i.status.key === 'pendente').length,
+    problemas: passport.filter((i) =>
+      ['vencido', 'pendente', 'em_analise', 'reprovado'].includes(i.status.key)
+    ).length,
   };
 }
 

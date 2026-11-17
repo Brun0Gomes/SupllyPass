@@ -76,7 +76,7 @@ export default function AddDocumentScreen({ route, navigation }) {
         'Documento enviado',
         `${result.fileName}\n\nCriptografado com AES-256-GCM e assinado digitalmente.\n\n` +
           `Hash SHA-256${result.real ? '' : ' (simulado)'}:\n${result.hash.slice(0, 32)}…\n\n` +
-          `Validade até ${formatDate(expiresAt)}.`,
+          `Validade até ${formatDate(expiresAt)}.\n\nO documento agora aguarda a análise antes de contar no Supplier Score.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (error) {
@@ -121,7 +121,9 @@ export default function AddDocumentScreen({ route, navigation }) {
               <Ionicons name="information-circle-outline" size={16} color={colors.primaryDark} />
               <Text style={styles.currentText}>
                 Já existe um arquivo enviado ({current.file}, válido até {formatDate(current.expiresAt)}).
-                O envio abaixo substitui a versão vigente; a anterior continua no histórico.
+                {current.reviewStatus === 'rejected' && current.reviewNote
+                  ? ` Motivo da reprovação: ${current.reviewNote}`
+                  : ' O envio abaixo substitui a versão vigente; a anterior continua no histórico.'}
               </Text>
             </View>
           ) : null}
@@ -180,6 +182,7 @@ export default function AddDocumentScreen({ route, navigation }) {
               'O servidor calcula o hash SHA-256 do arquivo original.',
               'O conteúdo é criptografado com AES-256-GCM antes de ir para o disco.',
               'A versão anterior do mesmo tipo é marcada como substituída, não apagada.',
+              'O documento entra na fila do Analista antes de valer no passaporte.',
               'A ação entra na trilha de auditoria e não pode ser removida.',
             ].map((line) => (
               <View key={line} style={styles.securityLine}>

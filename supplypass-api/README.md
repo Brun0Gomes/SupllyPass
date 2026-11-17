@@ -89,6 +89,9 @@ Todas as rotas ficam sob `/api`. Exceto `/health` e `/doc-types`, todas exigem
 | GET | `/me/passport` | fornecedor | passaporte do próprio fornecedor |
 | POST | `/me/documents` | fornecedor | upload (multipart: `file`, `type`, `expiresAt`) |
 | GET | `/me/documents/:id/download` | fornecedor | decifra, confere o hash e devolve o arquivo |
+| GET | `/reviews?status=pending` | analista | fila de documentos atuais aguardando decisão |
+| GET | `/reviews/:id` | analista | metadados de um documento da fila ou do histórico |
+| POST | `/reviews/:id/decision` | analista | aprova ou reprova; a reprovação exige justificativa |
 | GET | `/logs` | gestor, administrador | trilha de auditoria |
 | GET | `/users` | administrador | lista os usuários e seus acessos |
 | POST | `/users` | administrador | cria um usuário com perfil definido |
@@ -123,6 +126,7 @@ curl -s -X POST http://localhost:3333/api/verify \
 | Antiadulteração | o `authTag` do GCM faz a decifragem falhar se o arquivo cifrado for alterado |
 | Auditoria | tabela `audit_logs` recebe eventos da aplicação; centralização e retenção externa estão planejadas |
 | Versionamento | o documento antigo recebe `superseded_at`; nada é apagado |
+| Análise documental | novo envio começa `pending`; só `approved` pontua. Reprovação armazena motivo e responsável |
 | Vazamento na verificação | `/verify` devolve status, score e alertas — nunca nome de arquivo, hash ou download |
 
 ## Banco de dados
@@ -131,7 +135,8 @@ curl -s -X POST http://localhost:3333/api/verify \
 users      (id, name, email, password_hash, password_salt, role, company, supplier_id)
 suppliers  (id, name, cnpj, category, city, email, since, active)
 documents  (id, supplier_id, type, file_name, stored_name, sha256, iv, auth_tag,
-            issued_at, expires_at, uploaded_by, uploaded_at, superseded_at)
+            issued_at, expires_at, uploaded_by, uploaded_at, superseded_at,
+            review_status, review_note, reviewed_by, reviewed_at)
 audit_logs (id, kind, actor, action, target, ip, at)
 ```
 
@@ -156,5 +161,5 @@ supplypass-api/
     │   ├── suppliers.js      # consultas de fornecedores e documentos
     │   └── logs.js           # trilha de auditoria
     ├── middleware/auth.js    # JWT e controle de acesso por papel
-    └── routes/               # auth, suppliers, me, verify, logs
+    └── routes/               # auth, suppliers, me, reviews, verify, logs
 ```

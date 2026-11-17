@@ -53,8 +53,16 @@ export default function MyDocumentsScreen({ navigation }) {
               key={item.key}
               item={item}
               last={index === pendentes.length - 1}
-              actionLabel={item.doc ? 'atualizar' : 'enviar'}
-              onPress={() => open(item)}
+              actionLabel={
+                item.status.key === 'em_analise'
+                  ? 'em análise'
+                  : item.status.key === 'reprovado'
+                    ? 'reenviar'
+                    : item.doc
+                      ? 'atualizar'
+                      : 'enviar'
+              }
+              onPress={item.status.key === 'em_analise' ? undefined : () => open(item)}
             />
           ))
         )}

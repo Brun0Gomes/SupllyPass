@@ -147,12 +147,30 @@ const insertSupplier = db.prepare(`
 const insertDocument = db.prepare(`
   INSERT INTO documents (
     id, supplier_id, type, file_name, stored_name, mime_type, size_bytes,
-    sha256, iv, auth_tag, issued_at, expires_at, uploaded_by, uploaded_at, superseded_at
+    sha256, iv, auth_tag, issued_at, expires_at, uploaded_by, uploaded_at, superseded_at,
+    review_status, review_note, reviewed_by, reviewed_at
   ) VALUES (
     @id, @supplier_id, @type, @file_name, NULL, 'application/pdf', @size_bytes,
-    @sha256, NULL, NULL, @issued_at, @expires_at, 'seed', @uploaded_at, NULL
+    @sha256, NULL, NULL, @issued_at, @expires_at, 'seed', @uploaded_at, NULL,
+    @review_status, @review_note, NULL, @reviewed_at
   )
 `);
+
+function initialReview(supplierId, type) {
+  // Deixa uma fila realista para demonstrar o trabalho do Analista assim que
+  // a base é reiniciada. Os demais documentos são acervo já aprovado.
+  if (supplierId === 'FOR-1071' && type === 'seguro') {
+    return { status: 'pending', note: null, reviewedAt: null };
+  }
+  if (supplierId === 'FOR-1058' && type === 'cnd') {
+    return {
+      status: 'rejected',
+      note: 'Certidão vencida: envie uma versão vigente para nova análise.',
+      reviewedAt: new Date().toISOString(),
+    };
+  }
+  return { status: 'approved', note: null, reviewedAt: new Date().toISOString() };
+}
 
 const insertUser = db.prepare(`
   INSERT INTO users (id, name, email, password_hash, password_salt, role, company, supplier_id, created_at)
@@ -177,6 +195,7 @@ const runSeed = db.transaction(() => {
 
     Object.entries(supplier.docs).forEach(([type, offset]) => {
       const fileName = `${type}_${supplier.id.toLowerCase()}.pdf`;
+      const review = initialReview(supplier.id, type);
       insertDocument.run({
         id: newId('doc'),
         supplier_id: supplier.id,
@@ -188,6 +207,9 @@ const runSeed = db.transaction(() => {
         issued_at: isoFromToday(offset - 365),
         expires_at: isoFromToday(offset),
         uploaded_at: now,
+        review_status: review.status,
+        review_note: review.note,
+        reviewed_at: review.reviewedAt,
       });
     });
   });

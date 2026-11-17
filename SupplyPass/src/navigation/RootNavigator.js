@@ -16,6 +16,8 @@ import SupplierPassportScreen from '../screens/SupplierPassportScreen';
 import SuppliersScreen from '../screens/SuppliersScreen';
 import VerifyResultScreen from '../screens/VerifyResultScreen';
 import UsersScreen from '../screens/UsersScreen';
+import ReviewQueueScreen from '../screens/ReviewQueueScreen';
+import ReviewDocumentScreen from '../screens/ReviewDocumentScreen';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
@@ -66,6 +68,11 @@ function GestorTabs() {
 function AnalistaTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
+      <Tab.Screen
+        name="Análises"
+        component={ReviewQueueScreen}
+        options={{ tabBarIcon: tabIcon('checkbox-outline', 'checkbox') }}
+      />
       <Tab.Screen
         name="Fornecedores"
         component={SuppliersScreen}
@@ -152,6 +159,7 @@ export default function RootNavigator() {
       ) : role === 'analista' ? (
         <Stack.Group>
           <Stack.Screen name="AnalistaTabs" component={AnalistaTabs} />
+          <Stack.Screen name="ReviewDocument" component={ReviewDocumentScreen} />
           <Stack.Screen name="SupplierPassport" component={SupplierPassportScreen} />
           <Stack.Screen name="VerifyResult" component={VerifyResultScreen} />
         </Stack.Group>

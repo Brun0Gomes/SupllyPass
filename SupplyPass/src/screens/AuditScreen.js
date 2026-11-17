@@ -10,6 +10,7 @@ import { formatDateTime } from '../utils/dates';
 const KIND = {
   verificacao: { icon: 'qr-code-outline', color: colors.primary, soft: colors.primarySoft },
   upload: { icon: 'cloud-upload-outline', color: colors.green, soft: colors.greenSoft },
+  analise: { icon: 'checkbox-outline', color: colors.primary, soft: colors.primarySoft },
   acesso: { icon: 'finger-print-outline', color: colors.amber, soft: colors.amberSoft },
 };
 

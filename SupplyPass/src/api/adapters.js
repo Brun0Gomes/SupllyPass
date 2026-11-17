@@ -25,6 +25,10 @@ export function supplierFromApi(apiSupplier) {
         issuedAt: item.document.issuedAt,
         expiresAt: item.document.expiresAt,
         hash: item.document.sha256,
+        reviewStatus: item.document.reviewStatus || 'approved',
+        reviewNote: item.document.reviewNote || null,
+        reviewedBy: item.document.reviewedBy || null,
+        reviewedAt: item.document.reviewedAt || null,
       })),
   };
 }

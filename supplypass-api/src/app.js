@@ -10,6 +10,7 @@ const meRoutes = require('./routes/me.routes');
 const verifyRoutes = require('./routes/verify.routes');
 const logsRoutes = require('./routes/logs.routes');
 const usersRoutes = require('./routes/users.routes');
+const reviewsRoutes = require('./routes/reviews.routes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/me', meRoutes);
 app.use('/api/verify', verifyRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: `Rota não encontrada: ${req.method} ${req.originalUrl}` });

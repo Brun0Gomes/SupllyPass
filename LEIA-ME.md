@@ -46,7 +46,7 @@ Escaneie o QR Code do terminal com o Expo Go. Na tela de login do app, toque em
 **Configurar servidor**, cole o endereço anotado, toque em **Testar conexão** e depois em
 **Entrar**.
 
-> Sem tempo ou sem rede? Toque em **Contratante** ou **Fornecedor** na seção "Entrar sem
+> Sem tempo ou sem rede? Toque em **Gestor**, **Analista** ou **Fornecedor** na seção "Entrar sem
 > servidor". O app roda inteiro no celular com dados de demonstração.
 
 ## Contas
@@ -66,9 +66,11 @@ Escaneie o QR Code do terminal com o Expo Go. Na tela de login do app, toque em
 3. Abrir **ConstruBase** ou **SegPrime**: passaporte irregular, score baixo, documento em vermelho.
 4. Aba **Verificar**: escanear o QR do outro celular, ou tocar em um código de demonstração.
 5. Sair, entrar como **fornecedor**, aba **Documentos**: enviar o "Alvará de funcionamento".
-   O hash SHA-256 aparece na confirmação e o score sobe de **83 para 94**.
-6. Aba **Segurança** e, no perfil gestor, aba **Auditoria**: tudo que você fez está
-   registrado com autor, alvo, data e hora.
+   O hash SHA-256 aparece na confirmação e o arquivo entra como **Em análise**.
+6. Entrar como **analista**, aba **Análises**: aprovar ou reprovar com uma justificativa.
+   A decisão atualiza imediatamente o passaporte do fornecedor.
+7. Aba **Auditoria** no perfil gestor: envio, decisão e consulta ficam registrados com autor,
+   alvo, data e hora.
 
 Frase de fechamento: *"SupplyPass é um passaporte digital que centraliza, valida e monitora a
 documentação dos fornecedores."*

@@ -59,7 +59,10 @@ const suppliers = [
     documents: [
       { type: 'contrato', file: 'contrato_construbase.pdf', issuedAt: isoFromToday(-400), expiresAt: isoFromToday(90) },
       { type: 'cnpj', file: 'cartao_cnpj.pdf', issuedAt: isoFromToday(-120), expiresAt: isoFromToday(245) },
-      { type: 'cnd', file: 'cnd_federal.pdf', issuedAt: isoFromToday(-210), expiresAt: isoFromToday(-14) },
+      {
+        type: 'cnd', file: 'cnd_federal.pdf', issuedAt: isoFromToday(-210), expiresAt: isoFromToday(-14),
+        reviewStatus: 'rejected', reviewNote: 'Certidão vencida: envie uma versão vigente para nova análise.',
+      },
       { type: 'seguro', file: 'apolice_obra.pdf', issuedAt: isoFromToday(-100), expiresAt: isoFromToday(265) },
       { type: 'alvara', file: 'alvara_obras.pdf', issuedAt: isoFromToday(-300), expiresAt: isoFromToday(65) },
     ],
@@ -94,7 +97,10 @@ const suppliers = [
       { type: 'cnpj', file: 'cartao_cnpj.pdf', issuedAt: isoFromToday(-65), expiresAt: isoFromToday(300) },
       { type: 'cnd', file: 'cnd_federal.pdf', issuedAt: isoFromToday(-35), expiresAt: isoFromToday(145) },
       { type: 'lgpd', file: 'politica_lgpd.pdf', issuedAt: isoFromToday(-130), expiresAt: isoFromToday(235) },
-      { type: 'seguro', file: 'seguro_carga.pdf', issuedAt: isoFromToday(-75), expiresAt: isoFromToday(290) },
+      {
+        type: 'seguro', file: 'seguro_carga.pdf', issuedAt: isoFromToday(-75), expiresAt: isoFromToday(290),
+        reviewStatus: 'pending',
+      },
       { type: 'alvara', file: 'licenca_transporte.pdf', issuedAt: isoFromToday(-140), expiresAt: isoFromToday(225) },
     ],
   },

@@ -35,10 +35,12 @@ const supersede = db.prepare(`
 const insertDocument = db.prepare(`
   INSERT INTO documents (
     id, supplier_id, type, file_name, stored_name, mime_type, size_bytes,
-    sha256, iv, auth_tag, issued_at, expires_at, uploaded_by, uploaded_at, superseded_at
+    sha256, iv, auth_tag, issued_at, expires_at, uploaded_by, uploaded_at, superseded_at,
+    review_status, review_note, reviewed_by, reviewed_at
   ) VALUES (
     @id, @supplier_id, @type, @file_name, @stored_name, @mime_type, @size_bytes,
-    @sha256, @iv, @auth_tag, @issued_at, @expires_at, @uploaded_by, @uploaded_at, NULL
+    @sha256, @iv, @auth_tag, @issued_at, @expires_at, @uploaded_by, @uploaded_at, NULL,
+    'pending', NULL, NULL, NULL
   )
 `);
 
@@ -129,7 +131,7 @@ router.post('/documents', upload.single('file'), (req, res) => {
   logs.record({
     kind: 'upload',
     actor: req.user.company || req.user.name,
-    action: `Envio de documento (${DOC_TYPE_MAP[type].label})`,
+    action: `Envio de documento para análise (${DOC_TYPE_MAP[type].label})`,
     target: `${req.file.originalname} · sha256 ${digest.slice(0, 12)}…`,
     ip: req.ip,
   });
@@ -144,6 +146,7 @@ router.post('/documents', upload.single('file'), (req, res) => {
       issuedAt,
       expiresAt,
       encryption: 'AES-256-GCM',
+      reviewStatus: 'pending',
     },
     supplier: suppliersService.getOwnerPassport(supplierId),
   });

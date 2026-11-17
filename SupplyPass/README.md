@@ -50,7 +50,7 @@ O servidor imprime o endereço de rede:
 ```
 
 Na tela de login do app, toque em **Configurar servidor**, cole esse endereço, toque em
-**Testar conexão** e depois em **Entrar**. Os botões *Contratante* e *Fornecedor* preenchem
+**Testar conexão** e depois em **Entrar**. Os botões *Gestor*, *Analista* e *Fornecedor* preenchem
 apenas o e-mail; a senha é a que você definiu como `DEMO_PASSWORD` na API.
 
 Para definir a URL em cada ambiente sem alterar o código, copie `.env.example` para `.env` e
@@ -71,9 +71,11 @@ preencha `EXPO_PUBLIC_API_URL`. Se ela estiver vazia, a tela de login pede o end
    demonstração (ex.: `FOR-1042`). O selo 🟢 / ⚠️ / ❌ aparece em segundos.
 5. **Volte ao login e entre como _fornecedor_** — em *Documentos*, envie o "Alvará de
    funcionamento". No modo conectado o arquivo sobe de verdade, o servidor devolve o **hash
-   SHA-256** e o **score sobe de 83 para 94** na hora.
-6. **Feche pela segurança** — aba *Segurança*, e depois a aba *Auditoria* no perfil gestor:
-   tudo que você acabou de fazer já está registrado com autor, alvo, data e hora.
+   SHA-256** e ele fica **em análise**, sem pontuar antes da decisão.
+6. **Entre como _analista_** — na aba *Análises*, aprove ou reprove o documento; uma reprovação
+   exige justificativa e aparece para o fornecedor, que pode reenviar a versão corrigida.
+7. **Feche pela segurança** — a decisão e o envio aparecem na aba *Auditoria* do gestor com
+   autor, alvo, data e hora.
 
 Frase de fechamento: *"SupplyPass é um passaporte digital que centraliza, valida e monitora a
 documentação dos fornecedores."*
@@ -96,10 +98,10 @@ Cada documento tem um peso e a soma dos pesos é 100:
 
 - documento **válido** → soma o peso inteiro
 - documento **vencendo** (faltam 30 dias ou menos) → soma metade do peso
-- documento **vencido** ou **não enviado** → soma zero
+- documento **vencido**, **não enviado**, **em análise** ou **reprovado** → soma zero
 
-O status geral é independente da nota: **qualquer documento obrigatório vencido ou ausente
-bloqueia a contratação** (❌ irregular). Só documentos complementares com problema, ou qualquer
+O status geral é independente da nota: **qualquer documento obrigatório vencido, ausente, em
+análise ou reprovado bloqueia a contratação** (❌ irregular). Só documentos complementares com problema, ou qualquer
 documento vencendo, deixam o fornecedor em ⚠️ atenção. Tudo válido = 🟢 regular.
 
 A mesma regra existe nos dois lados — `src/utils/score.js` no app e `src/services/score.js` na
@@ -136,6 +138,8 @@ SupplyPass/
         ├── VerifyResultScreen.js       # resultado limitado da verificação
         ├── AuditScreen.js              # gestor/administrador: trilha de auditoria
         ├── UsersScreen.js              # administrador: usuários e acessos
+        ├── ReviewQueueScreen.js        # analista: documentos aguardando decisão
+        ├── ReviewDocumentScreen.js     # analista: aprovar/reprovar com justificativa
         ├── MyPassportScreen.js         # fornecedor: meu passaporte
         ├── MyDocumentsScreen.js        # fornecedor: enviar/atualizar documentos
         ├── AddDocumentScreen.js        # fornecedor: formulário de envio
@@ -151,8 +155,8 @@ SupplyPass/
 geração do QR Code e leitura pela câmera.
 
 **Real só no modo conectado:** login com senha e token JWT, banco SQLite, upload de arquivo,
-hash SHA-256 do arquivo, criptografia AES-256-GCM em repouso, versionamento de documentos e
-trilha de auditoria gravada no servidor.
+hash SHA-256 do arquivo, criptografia AES-256-GCM em repouso, versionamento, aprovação/reprovação
+documental e trilha de auditoria gravada no servidor.
 
 **Simulado no modo demonstração:** não há servidor — os dados vivem na memória do app e voltam ao
 estado inicial ao recarregar; o hash é gerado localmente só para ilustrar o conceito.

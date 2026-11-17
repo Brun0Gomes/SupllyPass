@@ -9,6 +9,8 @@ import { formatDate } from '../utils/dates';
 function describe(item) {
   const { status, daysLeft, doc } = item;
   if (status.key === 'pendente') return 'Documento não enviado';
+  if (status.key === 'em_analise') return 'Aguardando decisão do analista';
+  if (status.key === 'reprovado') return 'Correção e reenvio necessários';
   if (status.key === 'vencido') {
     const days = Math.abs(daysLeft);
     return `Vencido há ${days} ${days === 1 ? 'dia' : 'dias'} · ${formatDate(doc.expiresAt)}`;
@@ -40,6 +42,11 @@ export default function DocumentRow({ item, onPress, actionLabel, last }) {
         {item.doc && item.doc.file ? (
           <Text style={styles.file} numberOfLines={1}>
             {item.doc.file}
+          </Text>
+        ) : null}
+        {item.doc && item.doc.reviewNote && item.status.key === 'reprovado' ? (
+          <Text style={styles.reviewNote} numberOfLines={2}>
+            Motivo: {item.doc.reviewNote}
           </Text>
         ) : null}
       </View>
@@ -95,6 +102,7 @@ const styles = StyleSheet.create({
   },
   subtitle: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   file: { fontSize: 11, color: colors.textLight, marginTop: 2 },
+  reviewNote: { fontSize: 11, color: colors.red, marginTop: 3, lineHeight: 15 },
   right: { alignItems: 'flex-end', gap: 4 },
   action: { fontSize: 11, color: colors.primary, fontWeight: '700' },
 });
