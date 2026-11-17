@@ -18,8 +18,8 @@ function createDocumentRoutes({ pool, config, storage, store, passports, auth, a
   const { authenticate, requireRole, actorOf } = auth;
   const owner = [authenticate, requireRole('fornecedor'), limiter('user', 600)];
   const analyst = [authenticate, requireRole('analista'), limiter('user', 600)];
-  // Vercel Functions limitam o corpo da requisição. 3 MiB deixa espaço para multipart.
-  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: Math.min(config.maxUploadBytes, 3 * 1024 * 1024), files: 1, fields: 5 } });
+  // Limite abaixo dos 4,5 MB da Vercel, reservando espaço ao formulário multipart.
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: Math.min(config.maxUploadBytes, 4_400_000), files: 1, fields: 5 } });
 
   router.get('/me/passport', ...owner, wrap(async (req, res) => {
     const supplier = await passports.get(req.user.supplierId, true);

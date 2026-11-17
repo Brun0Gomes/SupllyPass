@@ -160,8 +160,9 @@ hash SHA-256 do arquivo, criptografia AES-256-GCM em repouso, versionamento, apr
 documental e trilha de auditoria gravada no servidor.
 
 O Administrador configura MFA TOTP no primeiro login conectado; para o Gestor, a exigência está
-temporariamente desativada. A API encerra sessões que
-ficam 30 minutos sem atividade e bloqueia uma conta por 15 minutos após cinco senhas inválidas.
+temporariamente desativada. Na nuvem, as novas sessões expiram após 7 dias de inatividade ou
+30 dias no máximo; na API local, o padrão continua sendo 30 minutos de inatividade e 8 horas no
+máximo. A conta é bloqueada por 15 minutos após cinco senhas inválidas.
 No modo conectado, o QR Code também é assinado pelo servidor; códigos adulterados são recusados.
 
 **Simulado no modo demonstração:** não há servidor — os dados vivem na memória do app e voltam ao

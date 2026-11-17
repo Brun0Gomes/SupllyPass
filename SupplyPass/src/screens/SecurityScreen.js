@@ -21,7 +21,7 @@ const CONTROLS = [
   {
     icon: 'finger-print-outline',
     title: 'Autenticação reforçada',
-    text: 'O Administrador usa MFA por código temporário (TOTP). As sessões expiram por tempo máximo ou 30 minutos sem atividade.',
+    text: 'O Administrador usa MFA por código temporário (TOTP). As sessões têm prazo máximo e expiram após um período de inatividade.',
   },
   {
     icon: 'people-outline',

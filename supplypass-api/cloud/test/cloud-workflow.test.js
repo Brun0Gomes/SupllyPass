@@ -86,6 +86,9 @@ test('API de nuvem mantém o fluxo e as permissões em PostgreSQL', async () => 
       return result.body.token;
     }
     const gestor = await login('gestor');
+    const restored = await request('/auth/me', { headers: { Authorization: `Bearer ${gestor}` } });
+    assert.equal(restored.response.status, 200);
+    assert.equal(restored.body.user.role, 'gestor');
     const analyst = await login('analista');
     const created = await request('/suppliers', { method: 'POST', headers: jsonHeaders(gestor), body: JSON.stringify({ name: 'Fornecedor isolado', cnpj: '12345678000190', category: 'Tecnologia' }) });
     assert.equal(created.response.status, 201, JSON.stringify(created.body));
@@ -114,6 +117,10 @@ test('API de nuvem mantém o fluxo e as permissões em PostgreSQL', async () => 
     const verified = await request('/verify', { method: 'POST', headers: jsonHeaders(gestor), body: JSON.stringify({ code: owner.body.supplier.qrCode }) });
     assert.equal(verified.response.status, 200, JSON.stringify(verified.body));
     assert.equal(verified.body.supplier.id, supplierId);
+    const logout = await request('/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${gestor}` } });
+    assert.equal(logout.response.status, 204);
+    const revoked = await request('/auth/me', { headers: { Authorization: `Bearer ${gestor}` } });
+    assert.equal(revoked.response.status, 401);
   } finally {
     if (server) await new Promise((resolve) => server.close(resolve));
     await connection.query('ROLLBACK').catch(() => {});

@@ -56,7 +56,7 @@ function createCloudApp({ config, pool, storage }) {
   app.use('/api', createDocumentRoutes({ pool, config, storage, store, passports, auth, audit, limiter }));
   app.use((req, res) => res.status(404).json({ error: 'Rota não encontrada.' }));
   app.use((error, req, res, next) => {
-    if (error instanceof multer.MulterError) return res.status(400).json({ error: 'Arquivo excede o limite permitido de 3 MB ou formulário inválido.' });
+    if (error instanceof multer.MulterError) return res.status(400).json({ error: 'Arquivo excede o limite permitido de 4,4 MB ou formulário inválido.' });
     console.error('Falha na API de nuvem:', error.code || error.name || 'erro');
     return res.status(500).json({ error: 'Não foi possível concluir a operação.' });
   });

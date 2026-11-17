@@ -43,7 +43,7 @@ ignorado pelo Git. Na Vercel, use o conteúdo da CA em `SUPABASE_DB_CA_CERT`, po
 seu computador não existe lá. Não use parâmetros SSL na URL: eles podem sobrescrever as opções
 TLS do driver. A verificação do certificado não deve ser desligada.
 
-A Vercel limita corpo de requisição e resposta; este fluxo aceita arquivos de até **3 MiB** para
+A Vercel limita corpo de requisição e resposta; este fluxo aceita arquivos de até **4,4 MB** para
 deixar espaço ao formulário multipart. A verificação do cabeçalho do arquivo não substitui um
 antivírus, que continua pendente. Os contadores de acesso são compartilhados no PostgreSQL;
 é necessário planejar limpeza periódica e retenção para a tabela de limites.
@@ -55,6 +55,11 @@ Em um terminal privado, configure temporariamente `BOOTSTRAP_ADMIN_NAME`,
 variáveis de conexão, e execute `node cloud/bootstrap-admin.js`. O comando recusa execução em um
 banco que já contenha usuários. Remova as variáveis da senha quando terminar. O Administrador
 configura MFA no primeiro login; o Gestor, por decisão temporária para a apresentação, não.
+
+Por padrão, as novas sessões na nuvem duram até 30 dias e expiram após 7 dias sem atividade.
+O aplicativo móvel guarda o token no armazenamento seguro e o valida ao abrir. Sair da conta
+revoga a sessão. Essas durações podem ser ajustadas por `JWT_EXPIRES_IN`, `SESSION_MAX_HOURS`
+e `SESSION_IDLE_MINUTES`.
 
 ## Verificação
 

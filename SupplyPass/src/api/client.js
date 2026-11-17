@@ -1,4 +1,7 @@
 import { DEFAULT_API_URL, REQUEST_TIMEOUT } from '../config';
+import { Platform } from 'react-native';
+import { fetch as expoFetch } from 'expo/fetch';
+import { File } from 'expo-file-system';
 
 // Endereço em uso. Fica em memória porque a tela de login pode trocá-lo.
 let baseUrl = DEFAULT_API_URL;
@@ -34,7 +37,7 @@ async function request(path, { method = 'GET', body, token, form } = {}) {
   if (body && !form) headers['Content-Type'] = 'application/json';
 
   try {
-    const response = await fetch(`${baseUrl}${path}`, {
+    const response = await (form && Platform.OS !== 'web' ? expoFetch : fetch)(`${baseUrl}${path}`, {
       method,
       headers,
       body: form ? body : body ? JSON.stringify(body) : undefined,
@@ -68,6 +71,7 @@ export const api = {
   health: () => request('/health'),
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
   logout: (token) => request('/auth/logout', { method: 'POST', token }),
+  me: (token) => request('/auth/me', { token }),
   mfaSetup: (mfaToken) => request('/auth/mfa/setup', { method: 'POST', token: mfaToken }),
   confirmMfa: (mfaToken, code) => request('/auth/mfa/confirm', { method: 'POST', token: mfaToken, body: { code } }),
   verifyMfa: (mfaToken, code) => request('/auth/mfa/verify', { method: 'POST', token: mfaToken, body: { code } }),
@@ -91,11 +95,21 @@ export const api = {
   // Upload real: multipart/form-data com o arquivo escolhido no celular.
   uploadDocument: (token, { file, type, expiresAt }) => {
     const data = new FormData();
-    data.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: file.mimeType || 'application/pdf',
-    });
+    if (Platform.OS === 'web') {
+      if (!file.browserFile) throw new ApiError('Não foi possível acessar o arquivo. Selecione-o novamente.', 0);
+      data.append('file', file.browserFile);
+    } else {
+      const selectedFile = new File(file.uri);
+      if (!selectedFile.exists) {
+        throw new ApiError('Não foi possível acessar o arquivo. Selecione-o novamente.', 0);
+      }
+      // O fetch do Expo aceita arquivos com bytes(), mas não objetos { uri }.
+      data.append('file', {
+        name: file.name,
+        type: file.mimeType || 'application/pdf',
+        bytes: () => selectedFile.bytes(),
+      });
+    }
     data.append('type', type);
     data.append('expiresAt', expiresAt);
     return request('/me/documents', { method: 'POST', token, body: data, form: true });

@@ -27,6 +27,8 @@ const PRESETS = [
   { label: '2 anos', days: 730 },
 ];
 
+const MAX_FILE_SIZE = 4_400_000;
+
 export default function AddDocumentScreen({ route, navigation }) {
   const { mySupplier, uploadDocument, mode } = useApp();
   const [type, setType] = useState(route.params?.type || DOC_TYPES[0].key);
@@ -52,6 +54,7 @@ export default function AddDocumentScreen({ route, navigation }) {
         name: asset.name,
         mimeType: asset.mimeType || 'application/pdf',
         size: asset.size,
+        browserFile: asset.file,
       });
     } catch (error) {
       Alert.alert('Não foi possível abrir os arquivos', error.message);
@@ -66,6 +69,10 @@ export default function AddDocumentScreen({ route, navigation }) {
     }
     if (mode === 'api' && !file) {
       Alert.alert('Selecione o arquivo', 'No modo conectado o arquivo é enviado de verdade ao servidor.');
+      return;
+    }
+    if (mode === 'api' && file?.size > MAX_FILE_SIZE) {
+      Alert.alert('Arquivo muito grande', 'Escolha um PDF ou imagem de até 4,4 MB.');
       return;
     }
 

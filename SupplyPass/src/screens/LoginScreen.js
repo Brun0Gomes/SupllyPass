@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -17,19 +18,25 @@ import { Ionicons } from '@expo/vector-icons';
 
 import PrimaryButton from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
-import { api, setBaseUrl } from '../api/client';
+import { api, getBaseUrl, setBaseUrl } from '../api/client';
 import { DEFAULT_API_URL } from '../config';
 import { colors, radius, spacing } from '../theme';
 
 export default function LoginScreen() {
-  const { loginWithApi } = useApp();
+  const { loginWithApi, error: sessionError } = useApp();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
-  const [showServer, setShowServer] = useState(!DEFAULT_API_URL);
+  const [showPassword, setShowPassword] = useState(false);
+  const [apiUrl, setApiUrl] = useState(getBaseUrl() || DEFAULT_API_URL);
+  const [showServer, setShowServer] = useState(!(getBaseUrl() || DEFAULT_API_URL));
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState(sessionError ? { type: 'erro', text: sessionError } : null);
+
+  const forgotPassword = () => Alert.alert(
+    'Recuperação de senha — demonstração',
+    'Esta função é uma demonstração: nenhum e-mail será enviado e a senha não será alterada. Para ajuda com o acesso, procure o administrador.'
+  );
 
   const entrar = async () => {
     setBusy(true);
@@ -94,14 +101,25 @@ export default function LoginScreen() {
             />
 
             <Text style={styles.label}>Senha</Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="••••••••"
-              placeholderTextColor={colors.textLight}
-              style={styles.input}
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="••••••••"
+                placeholderTextColor={colors.textLight}
+                style={[styles.input, styles.passwordInput]}
+              />
+              <Pressable onPress={() => setShowPassword((value) => !value)} style={styles.eyeButton}
+                accessibilityRole="button" accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
+                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.textMuted} />
+              </Pressable>
+            </View>
+            <Pressable onPress={forgotPassword} accessibilityRole="button" style={styles.forgotButton}>
+              <Text style={styles.serverToggleText}>Esqueceu a senha?</Text>
+            </Pressable>
 
             <PrimaryButton
               label={busy ? 'Conectando...' : 'Entrar'}
@@ -214,6 +232,10 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: 6,
   },
+  passwordContainer: { position: 'relative' },
+  passwordInput: { paddingRight: 52 },
+  eyeButton: { position: 'absolute', right: 0, top: 6, height: 46, width: 48, alignItems: 'center', justifyContent: 'center' },
+  forgotButton: { alignSelf: 'flex-end', paddingVertical: spacing.sm },
   quick: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   quickChip: {
     paddingVertical: 6,

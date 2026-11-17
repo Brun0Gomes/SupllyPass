@@ -1,4 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 import initialSuppliers, { CONTRATANTE, MY_SUPPLIER_ID } from '../data/suppliers';
 import { api, setBaseUrl, getBaseUrl } from '../api/client';
@@ -7,6 +9,7 @@ import { fakeHash } from '../utils/hash';
 import { DOC_TYPE_MAP } from '../utils/score';
 
 const AppContext = createContext(null);
+const SESSION_KEY = 'supplypass.session.v1';
 
 // Registros iniciais usados apenas no modo de demonstração.
 const demoLogs = [
@@ -85,6 +88,7 @@ export function AppProvider({ children }) {
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [authChallenge, setAuthChallenge] = useState(null);
+  const [restoringSession, setRestoringSession] = useState(true);
 
   const [suppliers, setSuppliers] = useState([]);
   const [mySupplier, setMySupplier] = useState(null);
@@ -97,10 +101,44 @@ export function AppProvider({ children }) {
 
   const role = user ? user.role : null;
 
+  useEffect(() => {
+    let cancelled = false;
+    async function restore() {
+      try {
+        if (Platform.OS === 'web') return;
+        const saved = await SecureStore.getItemAsync(SESSION_KEY);
+        if (!saved) return;
+        const session = JSON.parse(saved);
+        if (!session.token || !session.apiUrl) return;
+        setBaseUrl(session.apiUrl);
+        const result = await api.me(session.token);
+        if (!cancelled) {
+          setToken(session.token);
+          setUser(result.user);
+          setMode('api');
+        }
+      } catch (err) {
+        if (err.status === 401) await SecureStore.deleteItemAsync(SESSION_KEY).catch(() => {});
+        else if (!cancelled) setError('Não foi possível restaurar a sessão. Confira sua conexão e entre novamente.');
+      } finally {
+        if (!cancelled) setRestoringSession(false);
+      }
+    }
+    restore();
+    return () => { cancelled = true; };
+  }, []);
+
   // -------------------------------------------------------------------------
   // Entrada
   // -------------------------------------------------------------------------
-  const completeApiLogin = useCallback((data) => {
+  const completeApiLogin = useCallback(async (data) => {
+    if (Platform.OS !== 'web') {
+      try {
+        await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify({ token: data.token, apiUrl: getBaseUrl() }));
+      } catch (_) {
+        // O login continua funcionando mesmo se o dispositivo não puder salvar a sessão.
+      }
+    }
     setToken(data.token);
     setUser(data.user);
     setMode('api');
@@ -177,6 +215,7 @@ export function AppProvider({ children }) {
     setUsers([]);
     setReviews([]);
     setError(null);
+    if (Platform.OS !== 'web') SecureStore.deleteItemAsync(SESSION_KEY).catch(() => {});
     if (isApi && activeToken) api.logout(activeToken).catch(() => {});
   }, [mode, token]);
 
@@ -454,6 +493,7 @@ export function AppProvider({ children }) {
       reviews,
       loading,
       error,
+      restoringSession,
       loginWithApi,
       loadMfaSetup,
       confirmMfaSetup,
@@ -474,7 +514,7 @@ export function AppProvider({ children }) {
       addLog,
     }),
     [
-      mode, role, user, token, authChallenge, contratante, suppliers, mySupplier, logs, users, reviews, loading, error,
+      mode, role, user, token, authChallenge, contratante, suppliers, mySupplier, logs, users, reviews, loading, error, restoringSession,
       loginWithApi, loadMfaSetup, confirmMfaSetup, verifyMfaLogin, cancelAuthChallenge, startDemo, logout, refresh, verifyCode, registerCheck, uploadDocument,
       getSupplier, createUser, createSupplier, updateUser, rotateMyQr, reviewDocument, addLog,
     ]

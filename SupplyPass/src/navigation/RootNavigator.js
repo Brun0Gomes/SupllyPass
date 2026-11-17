@@ -1,4 +1,5 @@
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -147,7 +148,9 @@ function FornecedorTabs() {
 }
 
 export default function RootNavigator() {
-  const { role, authChallenge } = useApp();
+  const { role, authChallenge, restoringSession } = useApp();
+
+  if (restoringSession) return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator color={colors.primary} /></View>;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
