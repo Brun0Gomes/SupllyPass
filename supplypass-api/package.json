@@ -7,7 +7,9 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "seed": "node src/db/seed.js",
-    "reset": "node src/db/reset.js"
+    "reset": "node src/db/reset.js",
+    "retention:report": "node scripts/retention-report.js",
+    "backup": "node scripts/backup.js"
   },
   "engines": {
     "node": ">=22 <24"

@@ -53,6 +53,12 @@ Computador e celular precisam estar na mesma rede Wi-Fi.
 | `npm run dev` | sobe com recarga automática ao salvar |
 | `npm run seed` | popula o banco se ele estiver vazio |
 | `npm run reset` | apaga banco e arquivos e recria a base de demonstração |
+| `npm run retention:report` | mostra contagens para planejamento de retenção, sem alterar dados |
+| `npm run backup -- CAMINHO_NOVO` | copia o banco e os arquivos; execute com a API parada |
+
+Em `NODE_ENV=production`, a carga automática de demonstração fica desativada. O provisionamento
+seguro do primeiro administrador ainda precisa ser implementado. Consulte
+[`PRIVACIDADE-E-OPERACAO.md`](../docs/PRIVACIDADE-E-OPERACAO.md) antes de usar dados reais.
 
 ---
 
