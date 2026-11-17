@@ -63,7 +63,8 @@ preencha `EXPO_PUBLIC_API_URL`. Se ela estiver vazia, a tela de login pede o end
 1. **O problema** — abra o app na tela de login e conte a dor: contrato, certidão, LGPD, seguro e
    treinamento espalhados em e-mail, pasta, Excel e WhatsApp.
 2. **Entre como _gestor_** — o Painel mostra quantos fornecedores estão regulares, quantos
-   documentos vencem em 30 dias e quantas contratações estão bloqueadas.
+   documentos vencem em 30 dias e quantas contratações estão bloqueadas. No primeiro acesso
+   conectado, escaneie o QR de MFA no aplicativo autenticador e confirme o código temporário.
 3. **Abra um fornecedor irregular** (ConstruBase ou SegPrime) — passaporte com documentos em
    vermelho e score baixo.
 4. **Verificar por QR Code** — aba *Verificar*. Com dois celulares, abra o outro no perfil
@@ -157,6 +158,9 @@ geração do QR Code e leitura pela câmera.
 **Real só no modo conectado:** login com senha e token JWT, banco SQLite, upload de arquivo,
 hash SHA-256 do arquivo, criptografia AES-256-GCM em repouso, versionamento, aprovação/reprovação
 documental e trilha de auditoria gravada no servidor.
+
+Gestor e Administrador configuram MFA TOTP no primeiro login conectado. A API encerra sessões que
+ficam 30 minutos sem atividade e bloqueia uma conta por 15 minutos após cinco senhas inválidas.
 
 **Simulado no modo demonstração:** não há servidor — os dados vivem na memória do app e voltam ao
 estado inicial ao recarregar; o hash é gerado localmente só para ilustrar o conceito.

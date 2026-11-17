@@ -282,6 +282,18 @@ A trilha responde às quatro perguntas de auditoria: **quem** (`actor`), **o qu�
 **sobre o quê** (`target`) e **quando** (`at`). O índice em `at DESC` deixa a listagem "mais
 recentes primeiro" instantânea.
 
+### Autenticação reforçada
+
+Gestor e Administrador passam por TOTP no primeiro login e em todos os seguintes. A senha correta
+não entrega o JWT final: ela devolve um desafio de curta duração. No primeiro acesso,
+`POST /api/auth/mfa/setup` entrega a URI `otpauth://`; após `POST /api/auth/mfa/confirm`, o segredo
+é ativado. Nos demais logins, `POST /api/auth/mfa/verify` valida o código de seis dígitos.
+
+Cada JWT final carrega apenas um identificador aleatório de `sessions`. O middleware consulta a
+sessão e o usuário em toda requisição, atualiza `last_seen_at` e revoga a sessão após 30 minutos de
+inatividade. A tabela de usuários também registra cinco erros consecutivos e aplica bloqueio
+temporário de 15 minutos. Esses limites são configuráveis via `.env`.
+
 ---
 
 ## 4. `src/services/crypto.js`

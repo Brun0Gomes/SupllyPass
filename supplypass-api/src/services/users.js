@@ -13,6 +13,7 @@ function publicUser(user) {
     company: user.company || '',
     supplierId: user.supplier_id || null,
     active: Boolean(user.active),
+    mfaEnabled: Boolean(user.mfa_enabled),
     createdAt: user.created_at,
   };
 }

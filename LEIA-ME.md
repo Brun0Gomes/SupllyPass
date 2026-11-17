@@ -63,6 +63,7 @@ Escaneie o QR Code do terminal com o Expo Go. Na tela de login do app, toque em
 
 1. Tela de login: contar o problema — documentos espalhados em e-mail, pasta, planilha e WhatsApp.
 2. Entrar como **gestor**: o painel mostra regulares, vencimentos e bloqueios.
+   No primeiro acesso conectado, configure o código MFA no aplicativo autenticador.
 3. Abrir **ConstruBase** ou **SegPrime**: passaporte irregular, score baixo, documento em vermelho.
 4. Aba **Verificar**: escanear o QR do outro celular, ou tocar em um código de demonstração.
 5. Sair, entrar como **fornecedor**, aba **Documentos**: enviar o "Alvará de funcionamento".

@@ -78,6 +78,10 @@ Todas as rotas ficam sob `/api`. Exceto `/health` e `/doc-types`, todas exigem
 | GET | `/health` | qualquer um | teste de conexão |
 | GET | `/doc-types` | qualquer um | catálogo de documentos e pesos |
 | POST | `/auth/login` | qualquer um | devolve o token JWT |
+| POST | `/auth/mfa/setup` | desafio MFA | gera ou devolve o segredo e URI TOTP do primeiro cadastro |
+| POST | `/auth/mfa/confirm` | desafio MFA | valida o primeiro código, ativa MFA e abre sessão |
+| POST | `/auth/mfa/verify` | desafio MFA | valida o código TOTP de um login recorrente |
+| POST | `/auth/logout` | logado | revoga a sessão atual no servidor |
 | GET | `/auth/me` | logado | dados do usuário do token |
 | GET | `/suppliers` | gestor, analista, administrador | lista com score e status |
 | GET | `/suppliers?full=1` | gestor, analista, administrador | lista já com o passaporte de cada um |
@@ -120,6 +124,9 @@ curl -s -X POST http://localhost:3333/api/verify \
 |---|---|
 | Senhas | `scrypt` com sal aleatório por usuário; comparação em tempo constante (`timingSafeEqual`) |
 | Autenticação | JWT assinado, expiração de 8 h, validado em `middleware/auth.js` |
+| MFA | TOTP (RFC 6238) obrigatório para Gestor e Administrador; o segredo só é ativado após confirmação do primeiro código |
+| Bloqueio de login | cinco senhas inválidas bloqueiam a conta por 15 min; os valores são configuráveis no `.env` |
+| Sessão inativa | identificador de sessão no banco é revogado após 30 min sem requisições; alterações de perfil continuam imediatas |
 | Controle de acesso | RBAC para administrador, gestor, analista, fornecedor e verificador; conta e papel são conferidos no banco a cada requisição |
 | Criptografia em repouso | AES-256-GCM; o arquivo é cifrado **em memória**, antes de tocar o disco |
 | Integridade | SHA-256 do arquivo original gravado no banco e reconferido em todo download |

@@ -67,6 +67,10 @@ async function request(path, { method = 'GET', body, token, form } = {}) {
 export const api = {
   health: () => request('/health'),
   login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
+  logout: (token) => request('/auth/logout', { method: 'POST', token }),
+  mfaSetup: (mfaToken) => request('/auth/mfa/setup', { method: 'POST', token: mfaToken }),
+  confirmMfa: (mfaToken, code) => request('/auth/mfa/confirm', { method: 'POST', token: mfaToken, body: { code } }),
+  verifyMfa: (mfaToken, code) => request('/auth/mfa/verify', { method: 'POST', token: mfaToken, body: { code } }),
   docTypes: (token) => request('/doc-types', { token }),
   suppliers: (token) => request('/suppliers?full=1', { token }),
   supplier: (token, id) => request(`/suppliers/${id}`, { token }),

@@ -21,6 +21,11 @@ db.exec(`
     company       TEXT,
     supplier_id   TEXT REFERENCES suppliers(id),
     active        INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+    failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until  TEXT,
+    mfa_secret    TEXT,
+    mfa_pending_secret TEXT,
+    mfa_enabled   INTEGER NOT NULL DEFAULT 0 CHECK (mfa_enabled IN (0, 1)),
     created_at    TEXT NOT NULL
   );
 
@@ -75,6 +80,16 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_logs_at ON audit_logs (at DESC);
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    id           TEXT PRIMARY KEY,
+    user_id      TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at   TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    expires_at   TEXT NOT NULL,
+    revoked_at   TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id, revoked_at);
 `);
 
 // Bancos criados antes da Fase 1 têm os papéis antigos e não possuem `active`.
@@ -181,5 +196,22 @@ function migrateDocumentsTable() {
 }
 
 migrateDocumentsTable();
+
+function migrateUserSecurityColumns() {
+  const columns = db.prepare('PRAGMA table_info(users)').all();
+  const names = new Set(columns.map((column) => column.name));
+
+  if (!names.has('failed_login_attempts')) {
+    db.exec('ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!names.has('locked_until')) db.exec('ALTER TABLE users ADD COLUMN locked_until TEXT');
+  if (!names.has('mfa_secret')) db.exec('ALTER TABLE users ADD COLUMN mfa_secret TEXT');
+  if (!names.has('mfa_pending_secret')) db.exec('ALTER TABLE users ADD COLUMN mfa_pending_secret TEXT');
+  if (!names.has('mfa_enabled')) {
+    db.exec('ALTER TABLE users ADD COLUMN mfa_enabled INTEGER NOT NULL DEFAULT 0');
+  }
+}
+
+migrateUserSecurityColumns();
 
 module.exports = db;

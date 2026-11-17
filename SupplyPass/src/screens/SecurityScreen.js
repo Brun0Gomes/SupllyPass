@@ -20,8 +20,8 @@ const CONTROLS = [
   },
   {
     icon: 'finger-print-outline',
-    title: 'Autenticação atual',
-    text: 'O acesso conectado usa e-mail, senha e token JWT com expiração. MFA e encerramento por inatividade estão no próximo ciclo.',
+    title: 'Autenticação reforçada',
+    text: 'Gestor e Administrador usam MFA por código temporário (TOTP). As sessões expiram por tempo máximo ou 30 minutos sem atividade.',
   },
   {
     icon: 'people-outline',

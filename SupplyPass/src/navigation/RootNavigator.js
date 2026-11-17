@@ -18,6 +18,8 @@ import VerifyResultScreen from '../screens/VerifyResultScreen';
 import UsersScreen from '../screens/UsersScreen';
 import ReviewQueueScreen from '../screens/ReviewQueueScreen';
 import ReviewDocumentScreen from '../screens/ReviewDocumentScreen';
+import MfaSetupScreen from '../screens/MfaSetupScreen';
+import MfaVerifyScreen from '../screens/MfaVerifyScreen';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
@@ -144,11 +146,15 @@ function FornecedorTabs() {
 }
 
 export default function RootNavigator() {
-  const { role } = useApp();
+  const { role, authChallenge } = useApp();
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!role ? (
+      {!role && authChallenge?.kind === 'setup' ? (
+        <Stack.Screen name="MfaSetup" component={MfaSetupScreen} />
+      ) : !role && authChallenge?.kind === 'verify' ? (
+        <Stack.Screen name="MfaVerify" component={MfaVerifyScreen} />
+      ) : !role ? (
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : role === 'gestor' ? (
         <Stack.Group>

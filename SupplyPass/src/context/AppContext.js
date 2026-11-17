@@ -84,6 +84,7 @@ export function AppProvider({ children }) {
   const [mode, setMode] = useState(null);
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
+  const [authChallenge, setAuthChallenge] = useState(null);
 
   const [suppliers, setSuppliers] = useState([]);
   const [mySupplier, setMySupplier] = useState(null);
@@ -99,25 +100,62 @@ export function AppProvider({ children }) {
   // -------------------------------------------------------------------------
   // Entrada
   // -------------------------------------------------------------------------
+  const completeApiLogin = useCallback((data) => {
+    setToken(data.token);
+    setUser(data.user);
+    setMode('api');
+    setAuthChallenge(null);
+    return data.user;
+  }, []);
+
   const loginWithApi = useCallback(async (email, password, apiUrl) => {
     if (apiUrl) setBaseUrl(apiUrl);
     setLoading(true);
     setError(null);
     try {
       const data = await api.login(email, password);
-      setToken(data.token);
-      setUser(data.user);
-      setMode('api');
-      return data.user;
+      if (data.mfaRequired || data.mfaSetupRequired) {
+        setAuthChallenge({
+          kind: data.mfaSetupRequired ? 'setup' : 'verify',
+          token: data.mfaToken,
+          email: data.email,
+        });
+        return null;
+      }
+      return completeApiLogin(data);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [completeApiLogin]);
+
+  const loadMfaSetup = useCallback(async () => {
+    if (!authChallenge || authChallenge.kind !== 'setup') {
+      throw new Error('A etapa de MFA não está disponível. Entre novamente.');
+    }
+    const data = await api.mfaSetup(authChallenge.token);
+    setAuthChallenge((previous) => ({ ...previous, ...data }));
+    return data;
+  }, [authChallenge]);
+
+  const confirmMfaSetup = useCallback(async (code) => {
+    if (!authChallenge || authChallenge.kind !== 'setup') throw new Error('A etapa MFA expirou.');
+    const data = await api.confirmMfa(authChallenge.token, code);
+    return completeApiLogin(data);
+  }, [authChallenge, completeApiLogin]);
+
+  const verifyMfaLogin = useCallback(async (code) => {
+    if (!authChallenge || authChallenge.kind !== 'verify') throw new Error('A etapa MFA expirou.');
+    const data = await api.verifyMfa(authChallenge.token, code);
+    return completeApiLogin(data);
+  }, [authChallenge, completeApiLogin]);
+
+  const cancelAuthChallenge = useCallback(() => setAuthChallenge(null), []);
 
   const startDemo = useCallback((demoRole) => {
     setToken(null);
     setUser(DEMO_USERS[demoRole]);
     setMode('demo');
+    setAuthChallenge(null);
     setSuppliers(initialSuppliers);
     setMySupplier(initialSuppliers.find((s) => s.id === MY_SUPPLIER_ID) || initialSuppliers[0]);
     setLogs(demoLogs);
@@ -127,16 +165,20 @@ export function AppProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    const activeToken = token;
+    const isApi = mode === 'api';
     setMode(null);
     setToken(null);
     setUser(null);
+    setAuthChallenge(null);
     setSuppliers([]);
     setMySupplier(null);
     setLogs([]);
     setUsers([]);
     setReviews([]);
     setError(null);
-  }, []);
+    if (isApi && activeToken) api.logout(activeToken).catch(() => {});
+  }, [mode, token]);
 
   // -------------------------------------------------------------------------
   // Carregamento de dados (só faz sentido no modo API)
@@ -395,6 +437,7 @@ export function AppProvider({ children }) {
       role,
       user,
       token,
+      authChallenge,
       apiUrl: getBaseUrl(),
       contratante,
       suppliers,
@@ -405,6 +448,10 @@ export function AppProvider({ children }) {
       loading,
       error,
       loginWithApi,
+      loadMfaSetup,
+      confirmMfaSetup,
+      verifyMfaLogin,
+      cancelAuthChallenge,
       startDemo,
       logout,
       refresh,
@@ -419,8 +466,8 @@ export function AppProvider({ children }) {
       addLog,
     }),
     [
-      mode, role, user, token, contratante, suppliers, mySupplier, logs, users, reviews, loading, error,
-      loginWithApi, startDemo, logout, refresh, verifyCode, registerCheck, uploadDocument,
+      mode, role, user, token, authChallenge, contratante, suppliers, mySupplier, logs, users, reviews, loading, error,
+      loginWithApi, loadMfaSetup, confirmMfaSetup, verifyMfaLogin, cancelAuthChallenge, startDemo, logout, refresh, verifyCode, registerCheck, uploadDocument,
       getSupplier, createUser, updateUser, rotateMyQr, reviewDocument, addLog,
     ]
   );

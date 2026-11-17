@@ -2,12 +2,48 @@ const jwt = require('jsonwebtoken');
 
 const config = require('../config');
 const db = require('../db');
+const { newId } = require('../services/crypto');
 
-const findActiveUser = db.prepare(`
-  SELECT id, name, email, role, company, supplier_id
-  FROM users
-  WHERE id = ? AND active = 1
+const findActiveSession = db.prepare(`
+  SELECT
+    sessions.id AS session_id, sessions.last_seen_at, sessions.expires_at,
+    users.id, users.name, users.email, users.role, users.company, users.supplier_id
+  FROM sessions
+  JOIN users ON users.id = sessions.user_id
+  WHERE sessions.id = ? AND sessions.revoked_at IS NULL AND users.active = 1
 `);
+const touchSession = db.prepare('UPDATE sessions SET last_seen_at = ? WHERE id = ?');
+const revokeSession = db.prepare('UPDATE sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL');
+const insertSession = db.prepare(`
+  INSERT INTO sessions (id, user_id, created_at, last_seen_at, expires_at, revoked_at)
+  VALUES (@id, @user_id, @created_at, @last_seen_at, @expires_at, NULL)
+`);
+
+function sessionUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    company: user.company,
+    supplierId: user.supplier_id || null,
+  };
+}
+
+function createSession(user) {
+  const now = new Date();
+  const sessionId = newId('ses');
+  const expiresAt = new Date(now.getTime() + config.sessionMaxHours * 60 * 60 * 1000).toISOString();
+  insertSession.run({
+    id: sessionId,
+    user_id: user.id,
+    created_at: now.toISOString(),
+    last_seen_at: now.toISOString(),
+    expires_at: expiresAt,
+  });
+  const token = jwt.sign({ sub: user.id, sid: sessionId }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  return { token, expiresIn: config.jwtExpiresIn, user: sessionUser(user) };
+}
 
 // Le o token do cabecalho "Authorization: Bearer <token>", valida a assinatura
 // e coloca os dados do usuario em req.user. Sem token valido, ninguem passa.
@@ -29,21 +65,28 @@ function authenticate(req, res, next) {
     });
   }
 
-  // Sempre recarrega o usuário: desativações e alterações de papel passam a
-  // valer imediatamente, mesmo que o JWT ainda não tenha expirado.
-  const user = findActiveUser.get(payload.sub);
-  if (!user) {
+  if (!payload.sid) {
+    return res.status(401).json({ error: 'Sessão antiga inválida. Faça login novamente.' });
+  }
+
+  // A sessão e o usuário são recarregados a cada requisição: desativações,
+  // alterações de papel e expiração por inatividade passam a valer na hora.
+  const session = findActiveSession.get(payload.sid);
+  if (!session || session.id !== payload.sub) {
     return res.status(401).json({ error: 'Sessão inválida ou conta desativada.' });
   }
 
-  req.user = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    company: user.company,
-    supplierId: user.supplier_id || null,
-  };
+  const now = Date.now();
+  const idleAt = new Date(session.last_seen_at).getTime() + config.sessionIdleMinutes * 60 * 1000;
+  const expiresAt = new Date(session.expires_at).getTime();
+  if (now >= idleAt || now >= expiresAt) {
+    revokeSession.run(new Date().toISOString(), session.session_id);
+    return res.status(401).json({ error: 'Sessão encerrada por inatividade. Faça login novamente.' });
+  }
+  touchSession.run(new Date().toISOString(), session.session_id);
+
+  req.user = sessionUser(session);
+  req.sessionId = session.session_id;
   return next();
 }
 
@@ -64,4 +107,4 @@ function actorOf(req) {
   return req.user.company ? `${req.user.name} · ${req.user.company}` : req.user.name;
 }
 
-module.exports = { authenticate, requireRole, actorOf };
+module.exports = { authenticate, requireRole, actorOf, createSession, sessionUser };
