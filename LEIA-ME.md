@@ -46,8 +46,9 @@ Escaneie o QR Code do terminal com o Expo Go. Na tela de login do app, toque em
 **Configurar servidor**, cole o endereço anotado, toque em **Testar conexão** e depois em
 **Entrar**.
 
-> Sem tempo ou sem rede? Toque em **Gestor**, **Analista** ou **Fornecedor** na seção "Entrar sem
-> servidor". O app roda inteiro no celular com dados de demonstração.
+O aplicativo usa a API para autenticação e armazenamento. A criação automática de dados fictícios
+está desativada por padrão; para uma base nova, siga o provisionamento inicial em
+`supplypass-api/README.md`.
 
 ## Contas
 
@@ -63,7 +64,7 @@ Escaneie o QR Code do terminal com o Expo Go. Na tela de login do app, toque em
 
 1. Tela de login: contar o problema — documentos espalhados em e-mail, pasta, planilha e WhatsApp.
 2. Entrar como **gestor**: o painel mostra regulares, vencimentos e bloqueios.
-   No primeiro acesso conectado, configure o código MFA no aplicativo autenticador.
+   O Gestor entra com e-mail e senha; o MFA permanece obrigatório para o Administrador.
 3. Abrir **ConstruBase** ou **SegPrime**: passaporte irregular, score baixo, documento em vermelho.
 4. Aba **Verificar**: escanear o QR do outro celular, ou tocar em um código de demonstração.
 5. Sair, entrar como **fornecedor**, aba **Documentos**: enviar o "Alvará de funcionamento".

@@ -50,8 +50,9 @@ sobre a base existente sem um procedimento aprovado e uma cópia de segurança a
 - Provisionar cofre de segredos, criptografia de disco e backup externo com retenção definida.
 - Centralizar e proteger logs, definir retenção e testar recuperação.
 - Configurar antivírus para uploads, testes automatizados e verificações de segurança.
-- Criar processo seguro de provisionamento do primeiro administrador: com `NODE_ENV=production`,
-  a carga automática de contas de demonstração fica desativada; ainda não há instalador de admin.
+- Usar `npm run bootstrap:admin` para criar o primeiro administrador em um banco vazio, passando
+  credenciais pelo ambiente e removendo-as após o uso. A carga de demonstração fica desativada
+  em produção; após o primeiro login, configurar MFA.
 
 O limite de requisições atual fica na memória de cada processo e não é compartilhado entre
 instâncias. É necessário um mecanismo compartilhado antes de escalar a API.

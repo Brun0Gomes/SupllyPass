@@ -21,7 +21,7 @@ const CONTROLS = [
   {
     icon: 'finger-print-outline',
     title: 'Autenticação reforçada',
-    text: 'Gestor e Administrador usam MFA por código temporário (TOTP). As sessões expiram por tempo máximo ou 30 minutos sem atividade.',
+    text: 'O Administrador usa MFA por código temporário (TOTP). As sessões expiram por tempo máximo ou 30 minutos sem atividade.',
   },
   {
     icon: 'people-outline',
@@ -36,7 +36,7 @@ const CONTROLS = [
   {
     icon: 'shield-half-outline',
     title: 'Proteção de dados',
-    text: 'Esta demonstração limita os dados cadastrados. Política de retenção, atendimento aos titulares e gestão LGPD serão implementados antes da produção.',
+    text: 'Política de retenção, atendimento aos titulares e gestão LGPD ainda precisam ser definidos antes do uso em produção.',
   },
 ];
 

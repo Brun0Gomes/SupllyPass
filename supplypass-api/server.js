@@ -5,7 +5,7 @@ const config = require('./src/config');
 const { ensureSeed } = require('./src/db/seed');
 
 // Na primeira execucao o banco esta vazio: populamos com os dados de demonstracao.
-if (process.env.NODE_ENV !== 'production') ensureSeed();
+if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_DEMO_SEED === 'true') ensureSeed();
 
 app.listen(config.port, '0.0.0.0', () => {
   console.log('\n  SupplyPass API no ar');

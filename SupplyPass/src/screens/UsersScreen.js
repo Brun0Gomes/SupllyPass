@@ -30,7 +30,7 @@ function roleLabel(role) {
 }
 
 export default function UsersScreen() {
-  const { users, suppliers, refresh, loading, createUser, updateUser, user: currentUser } = useApp();
+  const { users, suppliers, refresh, loading, createUser, updateUser, user: currentUser, logout } = useApp();
   const [form, setForm] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
   const [busyId, setBusyId] = useState(null);
@@ -102,6 +102,7 @@ export default function UsersScreen() {
       subtitle={`${users.filter((entry) => entry.active).length} contas ativas`}
       onRefresh={refresh}
       refreshing={loading}
+      right={<Pressable onPress={logout} accessibilityLabel="Sair" hitSlop={12}><Ionicons name="log-out-outline" size={22} color={colors.white} /></Pressable>}
     >
       <Card style={styles.intro}>
         <Ionicons name="people-outline" size={20} color={colors.primaryDark} />
@@ -153,7 +154,7 @@ export default function UsersScreen() {
                       onPress={() => setField('supplierId', supplier.id)}
                       style={[styles.chip, active && styles.chipActive]}
                     >
-                      <Text style={[styles.chipText, active && styles.chipTextActive]}>{supplier.id}</Text>
+                      <Text style={[styles.chipText, active && styles.chipTextActive]}>{supplier.name}</Text>
                     </Pressable>
                   );
                 })}

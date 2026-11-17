@@ -18,7 +18,9 @@
     },
     "android": {
       "package": "com.supplypass.app",
-      "permissions": ["CAMERA"],
+      "permissions": [
+        "CAMERA"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#0B4F9E"
       }
@@ -29,7 +31,10 @@
         {
           "cameraPermission": "O SupplyPass usa a câmera para ler o QR Code do passaporte do fornecedor."
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-status-bar",
+      "expo-sharing"
     ]
   }
 }

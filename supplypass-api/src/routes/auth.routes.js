@@ -24,7 +24,7 @@ const enableMfa = db.prepare(`
   UPDATE users SET mfa_secret = mfa_pending_secret, mfa_pending_secret = NULL, mfa_enabled = 1 WHERE id = ?
 `);
 
-const MFA_ROLES = new Set(['administrador', 'gestor']);
+const MFA_ROLES = new Set(['administrador']);
 
 function actorOf(user) {
   return user.company ? `${user.name} · ${user.company}` : user.name;

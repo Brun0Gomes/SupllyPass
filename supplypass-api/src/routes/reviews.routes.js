@@ -5,6 +5,10 @@ const logs = require('../services/logs');
 const suppliers = require('../services/suppliers');
 const { authenticate, requireRole, actorOf } = require('../middleware/auth');
 const { authenticatedLimiter } = require('../middleware/rate-limit');
+const fs = require('node:fs');
+const path = require('node:path');
+const config = require('../config');
+const { decryptBuffer, sha256 } = require('../services/crypto');
 
 const router = express.Router();
 
@@ -33,6 +37,26 @@ router.get('/:id', (req, res) => {
   const review = suppliers.getReview(req.params.id);
   if (!review) return res.status(404).json({ error: 'Documento não encontrado.' });
   return res.json({ review });
+});
+
+router.get('/:id/download', (req, res) => {
+  const document = db.prepare('SELECT * FROM documents WHERE id = ? AND superseded_at IS NULL').get(req.params.id);
+  if (!document || !document.stored_name) return res.status(404).json({ error: 'Arquivo não disponível.' });
+  const filePath = path.join(config.storageDir, document.stored_name);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Arquivo não disponível.' });
+  let plain;
+  try {
+    plain = decryptBuffer(fs.readFileSync(filePath), config.fileKey, document.iv, document.auth_tag);
+    if (sha256(plain) !== document.sha256) throw new Error('Integridade inválida');
+  } catch (error) {
+    logs.record({ kind: 'acesso', actor: actorOf(req), action: 'Falha de integridade na análise documental', target: document.id, ip: req.ip });
+    return res.status(409).json({ error: 'Não foi possível verificar a integridade do arquivo.' });
+  }
+  logs.record({ kind: 'acesso', actor: actorOf(req), action: 'Arquivo aberto para análise', target: document.id, ip: req.ip });
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+  res.setHeader('Content-Disposition', 'attachment');
+  return res.send(plain);
 });
 
 router.post('/:id/decision', (req, res) => {

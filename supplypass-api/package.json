@@ -9,7 +9,10 @@
     "seed": "node src/db/seed.js",
     "reset": "node src/db/reset.js",
     "retention:report": "node scripts/retention-report.js",
-    "backup": "node scripts/backup.js"
+    "backup": "node scripts/backup.js",
+    "bootstrap:admin": "node scripts/bootstrap-admin.js",
+    "test": "node --test",
+    "cloud:preflight": "node cloud/preflight.js"
   },
   "engines": {
     "node": ">=22 <24"
@@ -20,7 +23,8 @@
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.23.1"
   },
   "private": true
 }

@@ -16,7 +16,7 @@ const FILTERS = [
 ];
 
 export default function SuppliersScreen({ navigation }) {
-  const { suppliers } = useApp();
+  const { suppliers, role, refresh, loading, mode } = useApp();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('todos');
 
@@ -34,7 +34,12 @@ export default function SuppliersScreen({ navigation }) {
   }, [suppliers, query, filter]);
 
   return (
-    <Screen title="Fornecedores" subtitle={`${suppliers.length} cadastrados na base`} scroll={false}>
+    <Screen title="Fornecedores" subtitle={`${suppliers.length} cadastrados na base`} scroll={false}
+      right={role === 'gestor' ? (
+        <Pressable onPress={() => navigation.navigate('CreateSupplier')} accessibilityLabel="Cadastrar fornecedor" hitSlop={12}>
+          <Ionicons name="add-circle-outline" size={26} color={colors.white} />
+        </Pressable>
+      ) : null}>
       <View style={styles.toolbar}>
         <View style={styles.searchBox}>
           <Ionicons name="search" size={16} color={colors.textLight} />
@@ -73,6 +78,8 @@ export default function SuppliersScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        refreshing={mode === 'api' ? loading : false}
+        onRefresh={mode === 'api' ? refresh : undefined}
         renderItem={({ item }) => (
           <SupplierCard
             supplier={item}

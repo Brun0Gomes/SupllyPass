@@ -74,7 +74,7 @@ export default function AddDocumentScreen({ route, navigation }) {
       const result = await uploadDocument({ type, file, expiresAt });
       Alert.alert(
         'Documento enviado',
-        `${result.fileName}\n\nCriptografado com AES-256-GCM e assinado digitalmente.\n\n` +
+        `${result.fileName}\n\nArquivo armazenado com criptografia.\n\n` +
           `Hash SHA-256${result.real ? '' : ' (simulado)'}:\n${result.hash.slice(0, 32)}…\n\n` +
           `Validade até ${formatDate(expiresAt)}.\n\nO documento agora aguarda a análise antes de contar no Supplier Score.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
@@ -183,7 +183,7 @@ export default function AddDocumentScreen({ route, navigation }) {
               'O conteúdo é criptografado com AES-256-GCM antes de ir para o disco.',
               'A versão anterior do mesmo tipo é marcada como substituída, não apagada.',
               'O documento entra na fila do Analista antes de valer no passaporte.',
-              'A ação entra na trilha de auditoria e não pode ser removida.',
+              'A ação é registrada na trilha de auditoria.',
             ].map((line) => (
               <View key={line} style={styles.securityLine}>
                 <Ionicons name="checkmark-circle" size={14} color={colors.green} />

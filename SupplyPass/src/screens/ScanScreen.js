@@ -11,7 +11,7 @@ import { useApp } from '../context/AppContext';
 import { colors, radius, spacing } from '../theme';
 
 export default function ScanScreen({ navigation }) {
-  const { suppliers, verifyCode, mode } = useApp();
+  const { suppliers, verifyCode, mode, role, logout } = useApp();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -51,7 +51,8 @@ export default function ScanScreen({ navigation }) {
   };
 
   return (
-    <Screen title="Verificar fornecedor" subtitle="Leia o QR Code do passaporte">
+    <Screen title="Verificar fornecedor" subtitle="Leia o QR Code do passaporte"
+      right={role === 'verificador' ? <Pressable onPress={logout} accessibilityLabel="Sair" hitSlop={12}><Ionicons name="log-out-outline" size={22} color={colors.white} /></Pressable> : null}>
       {permission && permission.granted ? (
         <View style={styles.cameraWrap}>
           {isFocused ? (

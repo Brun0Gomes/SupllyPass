@@ -35,7 +35,8 @@ npm install
 npm start
 ```
 
-Na primeira execução o banco é criado e populado sozinho (8 fornecedores, 5 usuários).
+Na primeira execução o banco é criado. Dados de demonstração só são criados se
+`ENABLE_DEMO_SEED=true` e não devem ser usados em produção.
 O terminal mostra dois endereços:
 
 ```
@@ -56,8 +57,11 @@ Computador e celular precisam estar na mesma rede Wi-Fi.
 | `npm run retention:report` | mostra contagens para planejamento de retenção, sem alterar dados |
 | `npm run backup -- CAMINHO_NOVO` | copia o banco e os arquivos; execute com a API parada |
 
-Em `NODE_ENV=production`, a carga automática de demonstração fica desativada. O provisionamento
-seguro do primeiro administrador ainda precisa ser implementado. Consulte
+Em `NODE_ENV=production`, a carga automática de demonstração fica desativada. Em um banco vazio,
+defina `BOOTSTRAP_ADMIN_NAME`, `BOOTSTRAP_ADMIN_EMAIL` e `BOOTSTRAP_ADMIN_PASSWORD` (mínimo de
+10 caracteres) no ambiente e execute `npm run bootstrap:admin`. O comando se recusa a criar
+uma conta caso já existam usuários. Remova as variáveis após o uso; nunca compartilhe a senha.
+No primeiro login, o administrador deve configurar MFA. Consulte
 [`PRIVACIDADE-E-OPERACAO.md`](../docs/PRIVACIDADE-E-OPERACAO.md) antes de usar dados reais.
 
 ---
@@ -130,7 +134,7 @@ curl -s -X POST http://localhost:3333/api/verify \
 |---|---|
 | Senhas | `scrypt` com sal aleatório por usuário; comparação em tempo constante (`timingSafeEqual`) |
 | Autenticação | JWT assinado, expiração de 8 h, validado em `middleware/auth.js` |
-| MFA | TOTP (RFC 6238) obrigatório para Gestor e Administrador; o segredo só é ativado após confirmação do primeiro código |
+| MFA | TOTP (RFC 6238) obrigatório para Administrador; o segredo só é ativado após confirmação do primeiro código. Para Gestor, está temporariamente desativado |
 | Bloqueio de login | cinco senhas inválidas bloqueiam a conta por 15 min; os valores são configuráveis no `.env` |
 | Sessão inativa | identificador de sessão no banco é revogado após 30 min sem requisições; alterações de perfil continuam imediatas |
 | Controle de acesso | RBAC para administrador, gestor, analista, fornecedor e verificador; conta e papel são conferidos no banco a cada requisição |

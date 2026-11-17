@@ -74,6 +74,7 @@ export const api = {
   docTypes: (token) => request('/doc-types', { token }),
   suppliers: (token) => request('/suppliers?full=1', { token }),
   supplier: (token, id) => request(`/suppliers/${id}`, { token }),
+  createSupplier: (token, input) => request('/suppliers', { method: 'POST', token, body: input }),
   registerSupplierCheck: (token, id) => request(`/suppliers/${id}/check`, { method: 'POST', token }),
   myPassport: (token) => request('/me/passport', { token }),
   verify: (token, code) => request('/verify', { method: 'POST', token, body: { code } }),

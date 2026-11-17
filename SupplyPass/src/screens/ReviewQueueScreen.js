@@ -10,10 +10,11 @@ import { formatDate, formatDateTime } from '../utils/dates';
 import { DOC_STATUS } from '../utils/score';
 
 export default function ReviewQueueScreen({ navigation }) {
-  const { reviews, refresh, loading, mode } = useApp();
+  const { reviews, refresh, loading, mode, logout } = useApp();
 
   return (
-    <Screen title="Fila de análises" subtitle={`${reviews.length} documento${reviews.length === 1 ? '' : 's'} aguardando`} scroll={false}>
+    <Screen title="Fila de análises" subtitle={`${reviews.length} documento${reviews.length === 1 ? '' : 's'} aguardando`} scroll={false}
+      right={<Pressable onPress={logout} accessibilityLabel="Sair" hitSlop={12}><Ionicons name="log-out-outline" size={22} color={colors.white} /></Pressable>}>
       <View style={styles.banner}>
         <Ionicons name="shield-checkmark-outline" size={17} color={colors.primaryDark} />
         <Text style={styles.bannerText}>

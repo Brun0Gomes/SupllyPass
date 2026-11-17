@@ -234,6 +234,7 @@ const runSeed = db.transaction(() => {
 function ensureSeed() {
   const { total } = db.prepare('SELECT COUNT(*) AS total FROM suppliers').get();
   if (total > 0) return false;
+  if (demoPassword.length < 10) throw new Error('DEMO_PASSWORD precisa ter ao menos 10 caracteres para criar dados de demonstração.');
   runSeed();
   console.log(`  banco populado: ${SEED_SUPPLIERS.length} fornecedores, ${SEED_USERS.length} usuários`);
   return true;

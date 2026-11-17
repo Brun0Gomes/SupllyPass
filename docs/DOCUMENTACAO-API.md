@@ -284,7 +284,8 @@ recentes primeiro" instantânea.
 
 ### Autenticação reforçada
 
-Gestor e Administrador passam por TOTP no primeiro login e em todos os seguintes. A senha correta
+O Administrador passa por TOTP no primeiro login e em todos os seguintes; para o Gestor, a
+exigência está temporariamente desativada. A senha correta
 não entrega o JWT final: ela devolve um desafio de curta duração. No primeiro acesso,
 `POST /api/auth/mfa/setup` entrega a URI `otpauth://`; após `POST /api/auth/mfa/confirm`, o segredo
 é ativado. Nos demais logins, `POST /api/auth/mfa/verify` valida o código de seis dígitos.

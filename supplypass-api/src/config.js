@@ -34,11 +34,14 @@ const rootDir = path.resolve(__dirname, '..');
 const dataDir = path.join(rootDir, 'data');
 const storageDir = path.join(rootDir, 'storage');
 const jwtSecret = requiredValue('JWT_SECRET', { minLength: 32 });
-const demoPassword = requiredValue('DEMO_PASSWORD', { minLength: 10 });
+const demoPassword = String(process.env.DEMO_PASSWORD || '').trim();
+const cloudMode = process.env.SUPPLYPASS_CLOUD === 'true';
 
 // As pastas de dados e de arquivos sao criadas na primeira execucao.
-fs.mkdirSync(dataDir, { recursive: true });
-fs.mkdirSync(storageDir, { recursive: true });
+if (!cloudMode) {
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(storageDir, { recursive: true });
+}
 
 // Chave AES-256 (32 bytes) usada para criptografar os arquivos em repouso.
 // Em producao ela viria de um cofre de segredos; aqui, se nao houver variavel
@@ -51,6 +54,7 @@ function loadFileKey() {
     }
     return Buffer.from(fileKey, 'hex');
   }
+  if (cloudMode) throw new Error('FILE_KEY must be configured in cloud mode.');
   const keyPath = path.join(dataDir, 'file.key');
   if (!fs.existsSync(keyPath)) {
     fs.writeFileSync(keyPath, crypto.randomBytes(32).toString('hex'), { mode: 0o600 });
@@ -60,6 +64,7 @@ function loadFileKey() {
 
 module.exports = {
   port: positiveInteger('PORT', 3333, { max: 65535 }),
+  cloudMode,
   jwtSecret,
   demoPassword,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',

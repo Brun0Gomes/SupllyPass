@@ -20,6 +20,7 @@ import ReviewQueueScreen from '../screens/ReviewQueueScreen';
 import ReviewDocumentScreen from '../screens/ReviewDocumentScreen';
 import MfaSetupScreen from '../screens/MfaSetupScreen';
 import MfaVerifyScreen from '../screens/MfaVerifyScreen';
+import CreateSupplierScreen from '../screens/CreateSupplierScreen';
 import { useApp } from '../context/AppContext';
 import { colors } from '../theme';
 
@@ -160,6 +161,7 @@ export default function RootNavigator() {
         <Stack.Group>
           <Stack.Screen name="GestorTabs" component={GestorTabs} />
           <Stack.Screen name="SupplierPassport" component={SupplierPassportScreen} />
+          <Stack.Screen name="CreateSupplier" component={CreateSupplierScreen} />
           <Stack.Screen name="VerifyResult" component={VerifyResultScreen} />
         </Stack.Group>
       ) : role === 'analista' ? (

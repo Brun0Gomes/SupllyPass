@@ -1,0 +1,12 @@
+.env
+.env.*
+data/
+storage/
+test/
+cloud/test/
+*.db
+*.db-shm
+*.db-wal
+*.enc
+*.key
+*.crt

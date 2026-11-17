@@ -406,6 +406,13 @@ export function AppProvider({ children }) {
     [token]
   );
 
+  const createSupplier = useCallback(async (input) => {
+    const data = await api.createSupplier(token, input);
+    const supplier = supplierFromApi(data.supplier);
+    setSuppliers((previous) => [...previous, supplier].sort((a, b) => a.name.localeCompare(b.name)));
+    return supplier;
+  }, [token]);
+
   const updateUser = useCallback(
     async (id, changes) => {
       const data = await api.updateUser(token, id, changes);
@@ -460,6 +467,7 @@ export function AppProvider({ children }) {
       uploadDocument,
       getSupplier,
       createUser,
+      createSupplier,
       updateUser,
       rotateMyQr,
       reviewDocument,
@@ -468,7 +476,7 @@ export function AppProvider({ children }) {
     [
       mode, role, user, token, authChallenge, contratante, suppliers, mySupplier, logs, users, reviews, loading, error,
       loginWithApi, loadMfaSetup, confirmMfaSetup, verifyMfaLogin, cancelAuthChallenge, startDemo, logout, refresh, verifyCode, registerCheck, uploadDocument,
-      getSupplier, createUser, updateUser, rotateMyQr, reviewDocument, addLog,
+      getSupplier, createUser, createSupplier, updateUser, rotateMyQr, reviewDocument, addLog,
     ]
   );
 

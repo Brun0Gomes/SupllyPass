@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
@@ -8,9 +10,10 @@ import Screen from '../components/Screen';
 import { useApp } from '../context/AppContext';
 import { colors, radius, spacing } from '../theme';
 import { formatDate, formatDateTime } from '../utils/dates';
+import { getBaseUrl } from '../api/client';
 
 export default function ReviewDocumentScreen({ route, navigation }) {
-  const { reviews, reviewDocument } = useApp();
+  const { reviews, reviewDocument, token, mode } = useApp();
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const review = reviews.find((entry) => entry.id === route.params?.reviewId);
@@ -47,6 +50,27 @@ export default function ReviewDocumentScreen({ route, navigation }) {
     }
   };
 
+  const openFile = async () => {
+    if (mode !== 'api') return;
+    setBusy(true);
+    let fileUri;
+    try {
+      const extension = review.mimeType === 'image/png' ? 'png' : review.mimeType === 'image/jpeg' ? 'jpg' : 'pdf';
+      fileUri = `${FileSystem.cacheDirectory}review-${review.id}.${extension}`;
+      const result = await FileSystem.downloadAsync(`${getBaseUrl()}/reviews/${encodeURIComponent(review.id)}/download`, fileUri, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (result.status !== 200) throw new Error('Arquivo indisponível ou sessão expirada.');
+      if (!(await Sharing.isAvailableAsync())) throw new Error('Não é possível abrir arquivos neste dispositivo.');
+      await Sharing.shareAsync(result.uri, { mimeType: review.mimeType || 'application/pdf', dialogTitle: 'Abrir documento para análise' });
+    } catch (error) {
+      Alert.alert('Não foi possível abrir o arquivo', error.message);
+    } finally {
+      if (fileUri) await FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
+      setBusy(false);
+    }
+  };
+
   return (
     <Screen title="Análise documental" subtitle={review.supplierName} onBack={() => navigation.goBack()}>
       <Card>
@@ -68,9 +92,11 @@ export default function ReviewDocumentScreen({ route, navigation }) {
       <View style={styles.notice}>
         <Ionicons name="information-circle-outline" size={17} color={colors.primaryDark} />
         <Text style={styles.noticeText}>
-          Confira o documento recebido no processo seguro da empresa. A decisão ficará registrada na trilha de auditoria.
+          Abra e confira o arquivo antes de decidir. A consulta e a decisão ficam registradas na auditoria.
         </Text>
       </View>
+
+      <PrimaryButton label="Abrir documento" icon="document-outline" variant="outline" onPress={openFile} disabled={busy} style={{ marginTop: spacing.lg }} />
 
       <Text style={styles.inputLabel}>Comentário para o fornecedor</Text>
       <TextInput

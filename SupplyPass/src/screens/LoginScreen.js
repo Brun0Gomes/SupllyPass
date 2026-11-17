@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -20,16 +21,10 @@ import { api, setBaseUrl } from '../api/client';
 import { DEFAULT_API_URL } from '../config';
 import { colors, radius, spacing } from '../theme';
 
-const CONTAS = [
-  { label: 'Gestor', email: 'compras@meridiano.com.br' },
-  { label: 'Analista', email: 'analise@meridiano.com.br' },
-  { label: 'Fornecedor', email: 'contato@novatech.com.br' },
-];
-
 export default function LoginScreen() {
-  const { loginWithApi, startDemo } = useApp();
+  const { loginWithApi } = useApp();
 
-  const [email, setEmail] = useState(CONTAS[0].email);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
   const [showServer, setShowServer] = useState(!DEFAULT_API_URL);
@@ -77,10 +72,9 @@ export default function LoginScreen() {
         >
           <SafeAreaView edges={['top']}>
             <View style={styles.brand}>
-              <View style={styles.logo}>
-                <Ionicons name="shield-checkmark" size={28} color={colors.white} />
+              <View style={styles.logoPanel}>
+                <Image source={require('../../assets/supplypass-logo.png')} style={styles.logoImage} resizeMode="contain" accessibilityLabel="Supply Pass" />
               </View>
-              <Text style={styles.appName}>SupplyPass</Text>
               <Text style={styles.tagline}>Passaporte digital de fornecedores</Text>
             </View>
           </SafeAreaView>
@@ -108,21 +102,6 @@ export default function LoginScreen() {
               placeholderTextColor={colors.textLight}
               style={styles.input}
             />
-
-            <View style={styles.quick}>
-              {CONTAS.map((conta) => (
-                <Pressable
-                  key={conta.email}
-                  onPress={() => {
-                    setEmail(conta.email);
-                    setPassword('');
-                  }}
-                  style={styles.quickChip}
-                >
-                  <Text style={styles.quickChipText}>{conta.label}</Text>
-                </Pressable>
-              ))}
-            </View>
 
             <PrimaryButton
               label={busy ? 'Conectando...' : 'Entrar'}
@@ -192,40 +171,6 @@ export default function LoginScreen() {
               </View>
             ) : null}
 
-            <View style={styles.divider}>
-              <View style={styles.line} />
-              <Text style={styles.dividerText}>ou</Text>
-              <View style={styles.line} />
-            </View>
-
-            <Text style={styles.demoTitle}>Entrar sem servidor (dados de demonstração)</Text>
-            <View style={styles.demoRow}>
-              <PrimaryButton
-                label="Gestor"
-                icon="business-outline"
-                variant="outline"
-                onPress={() => startDemo('gestor')}
-                style={{ flex: 1 }}
-              />
-              <PrimaryButton
-                label="Analista"
-                icon="checkbox-outline"
-                variant="outline"
-                onPress={() => startDemo('analista')}
-                style={{ flex: 1 }}
-              />
-              <PrimaryButton
-                label="Fornecedor"
-                icon="briefcase-outline"
-                variant="outline"
-                onPress={() => startDemo('fornecedor')}
-                style={{ flex: 1 }}
-              />
-            </View>
-            <Text style={styles.demoHint}>
-              O modo de demonstração roda tudo no próprio celular. Serve para apresentar o app sem
-              depender da rede.
-            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -237,16 +182,16 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.primary },
   scroll: { flexGrow: 1 },
   brand: { alignItems: 'center', paddingVertical: spacing.xl },
-  logo: {
-    width: 56,
-    height: 56,
+  logoPanel: {
+    width: 260,
+    height: 164,
     borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
-  appName: { fontSize: 27, fontWeight: '700', color: colors.white, letterSpacing: -0.5 },
+  logoImage: { width: 250, height: 160 },
   tagline: { fontSize: 13, color: 'rgba(255,255,255,0.82)', marginTop: 2 },
   sheet: {
     flex: 1,
